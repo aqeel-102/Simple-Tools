@@ -3,11 +3,13 @@ import 'package:simple_tools/views/screens/zakatcalculator/zakathistory.dart';
 import 'zakatscreen.dart';
 
 class ZakatCalculatorApp extends StatefulWidget {
+  const ZakatCalculatorApp({super.key});
+
   @override
-  State<ZakatCalculatorApp> createState() => _ZakatCalculatorAppState();
+  State<ZakatCalculatorApp> createState() => ZakatCalculatorAppState();
 }
 
-class _ZakatCalculatorAppState extends State<ZakatCalculatorApp> {
+class ZakatCalculatorAppState extends State<ZakatCalculatorApp> {
 
 
   @override

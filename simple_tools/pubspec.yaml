@@ -33,6 +33,7 @@ dependencies:
   ai_barcode_scanner: ^5.2.2
   image_picker: ^1.1.2
   audioplayers: ^6.1.0
+  http:
 
 dev_dependencies:
   flutter_test:

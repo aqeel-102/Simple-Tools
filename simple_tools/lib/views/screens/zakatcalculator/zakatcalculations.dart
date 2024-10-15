@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
-import 'package:http/http.dart' as http;
+import "package:http/http.dart" as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_tools/util/app_constants.dart';
 import 'package:simple_tools/views/screens/zakatcalculator/zakathistory.dart';
@@ -66,7 +66,7 @@ class ZakatCalculator {
   // Fetch the current gold price from the API
   Future<double> getCurrentGoldPrice() async {
     try {
-      final response = await http.get(Uri.parse(AppConstants.GOLD_PRICE_API_URL));
+      final response = await http.get(Uri.parse(AppConstants.goldPriceApi));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['metals'] != null && data['metals']['gold'] != null) {
@@ -86,7 +86,7 @@ class ZakatCalculator {
   // Fetch the current silver price from the API
   Future<double> getCurrentSilverPrice() async {
     try {
-      final response = await http.get(Uri.parse(AppConstants.SILVER_PRICE_API_URL));
+      final response = await http.get(Uri.parse(AppConstants.silverPriceApi));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['metals'] != null && data['metals']['silver'] != null) {

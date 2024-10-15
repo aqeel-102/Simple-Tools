@@ -14,10 +14,10 @@ class TimerScreen3 extends StatefulWidget {
   });
 
   @override
-  _TimerScreen3State createState() => _TimerScreen3State();
+  TimerScreen3State createState() => TimerScreen3State();
 }
 
-class _TimerScreen3State extends State<TimerScreen3> {
+class TimerScreen3State extends State<TimerScreen3> {
   final CountDownController _controller = CountDownController();
   bool _isPaused = false;
   bool _isRunning = false; // New variable to track the running state

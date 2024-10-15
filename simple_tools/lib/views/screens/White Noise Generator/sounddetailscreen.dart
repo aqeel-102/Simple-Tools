@@ -5,16 +5,16 @@ class SoundDetailScreen extends StatefulWidget {
   final String title;
   final String sound;
 
-  const SoundDetailScreen({
+  const SoundDetailScreen({super.key,
     required this.title,
     required this.sound,
   });
 
   @override
-  _SoundDetailScreenState createState() => _SoundDetailScreenState();
+  SoundDetailScreenState createState() => SoundDetailScreenState();
 }
 
-class _SoundDetailScreenState extends State<SoundDetailScreen> {
+class SoundDetailScreenState extends State<SoundDetailScreen> {
   late AudioPlayer _audioPlayer;
   bool _isPlaying = false;
   bool _isPaused = false;
@@ -23,7 +23,7 @@ class _SoundDetailScreenState extends State<SoundDetailScreen> {
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
-    _audioPlayer.setReleaseMode(ReleaseMode.stop);
+    _audioPlayer.setReleaseMode(ReleaseMode.loop);  // Set the release mode to loop
 
     _audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
       if (state == PlayerState.stopped) {
@@ -64,11 +64,9 @@ class _SoundDetailScreenState extends State<SoundDetailScreen> {
     });
   }
 
-  // Reset audio logic
-  void _resetAudio() {
+  // Stop audio logic
+  void _stopAudio() {
     _audioPlayer.stop();
-    _audioPlayer.seek(Duration.zero);  // Reset the audio to the beginning
-
     setState(() {
       _isPlaying = false;
       _isPaused = false;
@@ -195,11 +193,11 @@ class _SoundDetailScreenState extends State<SoundDetailScreen> {
                     ),
                     SizedBox(width: 10),
 
-                    // Reset button
+                    // Stop button
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          _resetAudio();
+                          _stopAudio();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent,
@@ -211,12 +209,12 @@ class _SoundDetailScreenState extends State<SoundDetailScreen> {
                           elevation: 12,
                         ),
                         icon: Icon(
-                          Icons.replay_circle_filled,
+                          Icons.stop_circle,
                           color: Colors.white,
                           size: 24,
                         ),
                         label: Text(
-                          'Reset',
+                          'Stop',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

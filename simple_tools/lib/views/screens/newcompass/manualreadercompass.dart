@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 
 class ManualReaderPage extends StatefulWidget {
+  const ManualReaderPage({super.key});
+
   @override
-  _ManualReaderPageState createState() => _ManualReaderPageState();
+  ManualReaderPageState createState() => ManualReaderPageState();
 }
 
-class _ManualReaderPageState extends State<ManualReaderPage> {
+class ManualReaderPageState extends State<ManualReaderPage> {
   CompassEvent? _lastRead;
   DateTime? _lastReadAt;
 

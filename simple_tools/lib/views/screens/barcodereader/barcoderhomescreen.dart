@@ -92,7 +92,7 @@ class _BarcoderState extends State<Barcoder> {
               ),
             ),
             const SizedBox(height: 20),
-            Container(
+            SizedBox(
               width: double.infinity,
               height: 60,
               child: ElevatedButton.icon(

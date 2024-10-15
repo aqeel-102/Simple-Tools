@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,7 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 class BarcodeDetailsScreen extends StatelessWidget {
   final String barcode;
 
-  BarcodeDetailsScreen({required this.barcode});
+  const BarcodeDetailsScreen({super.key, required this.barcode});
 
   @override
   Widget build(BuildContext context) {

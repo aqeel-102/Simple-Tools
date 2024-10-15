@@ -4,11 +4,13 @@ import '../../../util/app_constants.dart';
 import '../../../util/images.dart';
 import '../../custom_widgets/custom_card.dart';
 import '../Recipe Organizer/recipe_main_screen.dart';
+import '../White Noise Generator/mainscreennoisegenerator.dart';
 import '../barcodereader/barcoderhomescreen.dart';
 import '../bmi/bmi.dart';
 import '../bmr/bmr.dart';
 import '../countdowntimer/mainscreenofcountdown.dart';
 import '../newcompass/newcompass.dart';
+import '../passwordmanager/passwordmanagerhomepage.dart';
 import '../zakatcalculator/zakathome.dart';
 
 class Home extends StatefulWidget {
@@ -83,10 +85,10 @@ class _HomeState extends State<Home> {
                 const SizedBox(
                   height: 20,
                 ),
-                const CustomCard(
+                CustomCard(
                   image: Images.barcode,
-                  title: AppConstants.Barcode,
-                  nextScreen: Barcoder(),
+                  title: AppConstants.barCode,
+                  nextScreen: const Barcoder(),
                 ),
                 const SizedBox(
                   height: 20,
@@ -101,7 +103,7 @@ class _HomeState extends State<Home> {
                 ),
                 CustomCard(
                   image: Images.compass,
-                  title: AppConstants.Zakat,
+                  title: AppConstants.zakat,
                   nextScreen: ZakatCalculatorApp(),
                 ),
                 const SizedBox(
@@ -109,8 +111,24 @@ class _HomeState extends State<Home> {
                 ),
                 CustomCard(
                   image: Images.compass,
-                  title: AppConstants.ReciepeOrganizer,
+                  title: AppConstants.reciepeOrganizer,
                   nextScreen: RecipeMainScreen(),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                CustomCard(
+                  image: Images.compass,
+                  title: AppConstants.reciepeOrganizer,
+                  nextScreen: WhiteNoiseGenerator(),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                CustomCard(
+                  image: Images.compass,
+                  title: AppConstants.reciepeOrganizer,
+                  nextScreen: PasswordManagerHomePage(),
                 ),
               ],
             ),

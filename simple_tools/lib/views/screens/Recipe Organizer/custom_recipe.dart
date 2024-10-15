@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:simple_tools/views/screens/Recipe%20Organizer/reciepedetails.dart';
-import 'custom_recipe.dart'; // Ensure this imports your Recipe model
 
 class MyCustomReciepe extends StatelessWidget {
   final RecipeDetails recipe; // RecipeDetails parameter to receive the selected recipe
@@ -36,7 +35,7 @@ class MyCustomReciepe extends StatelessWidget {
                 '• $ingredient',
                 style: const TextStyle(fontSize: 16, color: Colors.black87),
               ),
-            )).toList(),
+            )),
             const SizedBox(height: 20),
 
             // Description

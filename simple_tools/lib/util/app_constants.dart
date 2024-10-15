@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 class AppConstants {
@@ -11,11 +10,13 @@ class AppConstants {
   static const bmiScreenTitle = 'BMI';
   static const bmr = 'Basal Metabolic Rate (BMR)';
   static const timer = 'Count Down Timer';
-  static const Qrcode = 'QR Code';
-  static const Barcode = 'Bar Code';
+  static const qrCode = 'QR Code';
+  static const barCode = 'Bar Code';
   static const bmrScreenTitle = 'BMR';
-  static const Zakat = 'Zakat Calculator';
-  static const ReciepeOrganizer = 'Reciepe Organizer';
+  static const zakat = 'Zakat Calculator';
+  static const reciepeOrganizer = 'Reciepe Organizer';
+  static const whiteNoiseGenerator = 'White Noice Generator';
+  static const passwordManager = 'Password Manager';
   static const jazzTitle = 'Jazz/Warid';
   static const zongTitle = 'Zong';
   static const telenorTitle = 'Telenor';
@@ -45,35 +46,13 @@ class AppConstants {
   static const int defaultWeight = 60;
   static const int defaultAge = 19;
 
-  static double _height = defaultHeight;
-  static int _weight = defaultWeight;
-  static int _age = defaultAge;
-  static double _result = 0.0;
-  static double _bmrresult = 0.0;
-  static double _bmiresult = 0.0;
-
-  static String _selectedofgender = 'nope';
-
-  static double get height => _height;
-  static set height(double value) => _height = value;
-
-  static int get weight => _weight;
-  static set weight(int value) => _weight = value;
-
-  static int get age => _age;
-  static set age(int value) => _age = value;
-
-  static double get result => _result;
-  static set result(double bmi) => _result = bmi;
-
-  static String get selectedofgender => _selectedofgender;
-  static set selectedofgender(String selectedgender) => _selectedofgender = selectedgender;
-
-  static double get bmrresult => _bmrresult;
-  static set bmrresult(double bmr) => _bmrresult = bmr;
-  static double get bmiresult => _bmiresult;
-  static set bmiresult(double bmr) => _bmiresult = bmr;
-
+  static double height = defaultHeight;
+  static int weight = defaultWeight;
+  static int age = defaultAge;
+  static double result = 0.0;
+  static double bmrresult = 0.0;
+  static double bmiresult = 0.0;
+  static String selectedofgender = 'nope';
   static  int hours = 0;
   static int minutes = 0;
   static int seconds = 0;
@@ -91,19 +70,16 @@ class AppConstants {
   static const String invalidQRCode = 'Invalid QR Code';
   static const String copy = 'Copy';
   static const String share = 'Share';
-
   static const String compassTitle = 'Compass';
   static const String qiblaFinderButton = 'Find Qibla Direction';
   static const String compassImage = 'assets/compass.png';
   static const String qiblaArrowImage = 'assets/qibla_arrow.png';
-
-
-  static const double ZAKAT_PERCENTAGE = 0.025;
-  static const String CURRENCY_SYMBOL = 'PKR';
+  static const double zakatPercentage = 0.025;
+  static const String currancyrate = 'PKR';
 
   // API URLs for fetching gold and silver prices
-  static const String GOLD_PRICE_API_URL = 'https://api.metals.dev/v1/latest?api_key=OBT7IGJM5TLXQGD7UXQV176D7UXQV&currency=PKR&unit=g';
-  static const String SILVER_PRICE_API_URL = 'https://api.metals.dev/v1/latest?api_key=OBT7IGJM5TLXQGD7UXQV176D7UXQV&currency=PKR&unit=g';
+  static const String goldPriceApi = 'https://api.metals.dev/v1/latest?api_key=OBT7IGJM5TLXQGD7UXQV176D7UXQV&currency=PKR&unit=g';
+  static const String silverPriceApi = 'https://api.metals.dev/v1/latest?api_key=OBT7IGJM5TLXQGD7UXQV176D7UXQV&currency=PKR&unit=g';
 
 
 }

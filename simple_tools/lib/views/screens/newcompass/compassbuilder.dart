@@ -4,6 +4,8 @@ import 'package:flutter_compass/flutter_compass.dart';
 import '../../../util/images.dart';
 
 class CompassPage extends StatelessWidget {
+  const CompassPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<CompassEvent>(

@@ -5,11 +5,13 @@ import 'compasspermission.dart';
 import 'manualreadercompass.dart';
 
 class Mycompass extends StatefulWidget {
+  const Mycompass({super.key});
+
   @override
-  _MycompassState createState() => _MycompassState();
+  MycompassState createState() => MycompassState();
 }
 
-class _MycompassState extends State<Mycompass> {
+class MycompassState extends State<Mycompass> {
   bool _hasPermissions = false;
 
   @override

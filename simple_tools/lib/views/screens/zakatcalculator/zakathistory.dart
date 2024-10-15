@@ -3,11 +3,13 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ZakatHistoryList extends StatefulWidget {
+  const ZakatHistoryList({super.key});
+
   @override
-  _ZakatHistoryListState createState() => _ZakatHistoryListState();
+  ZakatHistoryListState createState() => ZakatHistoryListState();
 }
 
-class _ZakatHistoryListState extends State<ZakatHistoryList> {
+class ZakatHistoryListState extends State<ZakatHistoryList> {
   List<ZakatHistory> zakatHistory = [];
 
   @override

@@ -79,7 +79,7 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
       try {
         recipeDetailsList.add(RecipeDetails.fromJson(json.decode(recipeJson)));
       } catch (e) {
-        print("Error decoding recipe: $e"); // Handle any errors in decoding
+        debugPrint("Error decoding recipe: $e"); // Handle any errors in decoding
       }
     }
 
@@ -195,6 +195,7 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
                                       },
                                       child: Text('Edit'),
                                     ),
+
                                     TextButton(
                                       onPressed: () {
                                         // Delete the recipe

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:simple_tools/views/screens/zakatcalculator/zakatcalculations.dart';
 import 'package:simple_tools/views/screens/zakatcalculator/zakatinputform.dart';
 class ZakatCalculatorScreen extends StatefulWidget {
+  const ZakatCalculatorScreen({super.key});
+
 
   @override
-  _ZakatCalculatorScreenState createState() => _ZakatCalculatorScreenState();
+  ZakatCalculatorScreenState createState() => ZakatCalculatorScreenState();
 }
 
-class _ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
+class ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

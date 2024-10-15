@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+
 class RecipeDetails {
   String name;
   String time;
@@ -29,7 +31,7 @@ class RecipeDetails {
       try {
         ingredientsList = List<Map<String, dynamic>>.from(json['ingredients']);
       } catch (e) {
-        print("Error decoding ingredients: $e"); // Print any errors in decoding ingredients
+        debugPrint("Error decoding ingredients: $e"); // Print any errors in decoding ingredients
       }
     }
 

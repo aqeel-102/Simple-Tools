@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
 import 'package:simple_tools/views/screens/countdowntimer/scrollabletime/scrollabletimerwheel.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import this
 
@@ -19,10 +18,10 @@ class AddEditTimerScreen extends StatefulWidget {
   });
 
   @override
-  _AddEditTimerScreenState createState() => _AddEditTimerScreenState();
+  AddEditTimerScreenState createState() => AddEditTimerScreenState();
 }
 
-class _AddEditTimerScreenState extends State<AddEditTimerScreen> {
+class AddEditTimerScreenState extends State<AddEditTimerScreen> {
   late final TextEditingController _nameController = TextEditingController();
   int selectedHours = 0;
   int selectedMinutes = 0;
@@ -112,7 +111,7 @@ class _AddEditTimerScreenState extends State<AddEditTimerScreen> {
     await prefs.setInt('duration_$timerCount', duration.inSeconds);
     await prefs.setString('ringtone_$timerCount', selectedRingtone);
     await prefs.setInt('timerCount', timerCount + 1); // Update timer count
-
+    if (!mounted) return;
     Navigator.pop(context, {
       'name': _nameController.text.trim(),
       'duration': duration,

@@ -9,10 +9,10 @@ class ZakatForm extends StatefulWidget {
 
 
   @override
-  _ZakatFormState createState() => _ZakatFormState();
+  ZakatFormState createState() => ZakatFormState();
 }
 
-class _ZakatFormState extends State<ZakatForm> {
+class ZakatFormState extends State<ZakatForm> {
   final _formKey = GlobalKey<FormState>();
   final _goldController = TextEditingController();
   final _silverController = TextEditingController();
@@ -37,7 +37,11 @@ class _ZakatFormState extends State<ZakatForm> {
         );
 
         final zakatAmount = await zakatCalculator.calculateZakat();
-        if (zakatAmount == 0) {
+        int zakatval= zakatAmount as int;
+
+        if (!mounted) return;
+
+        if (zakatval == 0) {
           // Show alert dialog instead of SnackBar
           showDialog(
             context: context,
@@ -63,7 +67,7 @@ class _ZakatFormState extends State<ZakatForm> {
             builder: (BuildContext context) {
               return AlertDialog(
                 title: Text('Zakat Calculated'),
-                content: Text(' ${zakatAmount}'),
+                content: Text(zakatAmount.toString()), // Convert to string if zakatAmount is an int
                 actions: [
                   TextButton(
                     onPressed: () {

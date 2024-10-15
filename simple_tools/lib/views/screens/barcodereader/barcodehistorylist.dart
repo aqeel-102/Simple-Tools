@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 import '../../../util/history.dart';
 
 class HistoryScreen extends StatefulWidget {
+  const HistoryScreen({super.key});
+
   @override
-  _HistoryScreenState createState() => _HistoryScreenState();
+  HistoryScreenState createState() => HistoryScreenState();
 }
 
-class _HistoryScreenState extends State<HistoryScreen> {
+class HistoryScreenState extends State<HistoryScreen> {
   List<String> barcodeHistory = [];
 
   @override

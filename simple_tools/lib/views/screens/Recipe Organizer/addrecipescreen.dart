@@ -101,9 +101,7 @@ class _AddrecipescreenState extends State<Addrecipescreen> {
 
     List<String>? recipesList = prefs.getStringList('recipes');
 
-    if (recipesList == null) {
-      recipesList = [];
-    }
+    recipesList ??= [];
 
     // If editing an existing recipe, replace it in the list
     if (editingRecipeIndex != null) {
@@ -116,7 +114,7 @@ class _AddrecipescreenState extends State<Addrecipescreen> {
     try {
       // Store the updated list back to SharedPreferences
       await prefs.setStringList('recipes', recipesList);
-
+      if (!mounted) return; // Check if the widget is still mounted
       // Clear input fields after saving
       recipename.clear();
       recipTime.clear();
@@ -130,6 +128,7 @@ class _AddrecipescreenState extends State<Addrecipescreen> {
 
       Navigator.pop(context); // Navigate back after saving
     } catch (e) {
+      if (!mounted) return; // Check if the widget is still mounted
       // Handle any error during SharedPreferences save operation
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error saving recipe: $e")),

@@ -1,0 +1,826 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simple_tools/views/screens/passwordmanager/password_details.dart';
+import 'package:simple_tools/views/screens/passwordmanager/password_model.dart';
+import '../../../util/images.dart';
+import 'browse_collection.dart';
+import 'card_collection.dart';
+import 'card_model.dart';
+import 'carddetails.dart';
+import 'login_collection.dart';
+enum InputType {
+  user, // For user-related fields
+  card,  // For card-related fields
+}
+class PasswordManagerHomePage extends StatefulWidget {
+  const PasswordManagerHomePage({super.key});
+
+  @override
+  PasswordManagerHomePageState createState() =>
+      PasswordManagerHomePageState();
+}
+
+class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
+  // Text controllers
+  TextEditingController usernameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  final TextEditingController _cardNumberController = TextEditingController();
+  final TextEditingController _banknameController = TextEditingController();
+  final TextEditingController _cardHolderNameController = TextEditingController();
+  final TextEditingController _expiryDateController = TextEditingController();
+  final TextEditingController _cvvController = TextEditingController();
+  List<Password> accounts = [];
+  List<Cards>cardaccount=[];
+  List<Password> login = [];
+  List<Password> browse = [];
+  List<Cards> card = [];
+  late ImagePicker _picker;
+  XFile? _imageFile;
+
+  String _selectedIcon = Images.defaultval;
+  final List<String> _availableIcons = [
+    Images.linkedin,
+    Images.instagram,
+    Images.netflix,
+    Images.google,
+    Images.facebook,
+    Images.whatsapp,
+    Images.card,
+    Images.defaultval
+  ];
+
+  // Function to show the icon picker dialog
+  void _showIconPicker() async {
+    final String? pickedIcon = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Select an Icon'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+              ),
+              itemCount: _availableIcons.length,
+              itemBuilder: (context, index) {
+                final iconPath = _availableIcons[index];
+                return GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).pop(
+                          _availableIcons[index]); // Return selected icon path
+                    },
+                    child: Image.asset(iconPath)
+                  //Image(iconPath, width: 50, height: 50),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+
+    if (pickedIcon != null) {
+      setState(() {
+        _selectedIcon = pickedIcon; // Update selected icon
+      });
+    }
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccounts(); // Load accounts when the widget is initialized
+    _picker = ImagePicker();
+  }
+
+  // Function to load accounts from SharedPreferences
+  Future<void> _loadAccounts() async {
+    SharedPreferences sp = await SharedPreferences.getInstance();
+    String? jsonString = sp.getString('savedlist');
+
+    if (jsonString != null) {
+      List<dynamic> jsonResponse = jsonDecode(jsonString);
+      setState(() {
+        accounts = jsonResponse.map((account) => Password.fromJson(account))
+            .toList(); // Assuming Password has fromJson constructor
+      });
+    }
+    setState(() async {
+      cardaccount = await Cards.getCards();
+    });
+
+  }
+
+  void saveValues() {
+    if (usernameController.text.isNotEmpty &&
+        emailController.text.isNotEmpty &&
+        passwordController.text.isNotEmpty) {
+      Password newAccount = Password(
+        accountUsername: usernameController.text,
+        email: emailController.text,
+        imagePath: _selectedIcon, // Use the selected icon
+        password: passwordController.text,
+      );
+
+      setState(() {
+        accounts.add(newAccount);
+      });
+
+      savingintosharedprefernce(accounts); // Save to SharedPreferences
+
+      // Show success Snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Account Added Successfully!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Clear the controllers after saving
+      usernameController.clear();
+      emailController.clear();
+      passwordController.clear();
+
+      // Close the bottom sheet after saving
+      Navigator.pop(context);
+    } else {
+      Navigator.pop(context);
+      // Show error Snackbar if fields are empty
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please fill in all fields!'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void saveCardvalues() {
+    if (_banknameController.text.isNotEmpty &&
+        _cardHolderNameController.text.isNotEmpty &&
+        _cardNumberController.text.isNotEmpty &&
+        _expiryDateController.text.isNotEmpty &&
+        _cvvController.text.isNotEmpty) {
+
+      // Create a new Cards object with input values
+      Cards newCard = Cards(
+        imagePath: _selectedIcon,
+        cardNumber: _cardNumberController.text,
+        cardHolderName: _cardHolderNameController.text,
+        cardExpiry: _expiryDateController.text,
+        cardCvv: _cvvController.text,
+        bankname: _banknameController.text,
+      );
+
+      setState(() {
+        cardaccount.add(newCard); // Add to the list of accounts/cards
+      });
+
+      // Save updated list to SharedPreferences
+      Cards.saveCards(cardaccount);
+
+      // Show success Snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Card Added Successfully!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Clear the controllers after saving
+      _banknameController.clear();
+      _cardHolderNameController.clear();
+      _cardNumberController.clear();
+      _expiryDateController.clear();
+      _cvvController.clear();
+
+      // Close the bottom sheet after saving
+      Navigator.pop(context);
+    } else {
+      // Close the bottom sheet and show error Snackbar if fields are empty
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all fields!'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+
+  Future<void> savingintosharedprefernce(List<Password> accounts) async {
+    SharedPreferences sp = await SharedPreferences.getInstance();
+    String afterjsonencode = jsonEncode(
+        accounts.map((account) => account.toJson())
+            .toList()); // Convert list of Password objects to JSON
+    await sp.setString('savedlist', afterjsonencode);
+  }
+
+  Future<void> savingselectedsharedprefernce(List<Password> selected) async {
+    SharedPreferences sp1 = await SharedPreferences.getInstance();
+
+    String loginjson = jsonEncode(login.map((login) => login.toJson()).toList());
+    String browsejson = jsonEncode(browse.map((browse) => browse.toJson()).toList());
+
+    await sp1.setString('login', loginjson);
+    await sp1.setString('browse', browsejson);
+  }
+
+  Future<void> savingextraselectedsharedprefernce(List<Cards> selected) async {
+    SharedPreferences sp1 = await SharedPreferences.getInstance();
+
+    String cardjson = jsonEncode(selected.map((card) => card.toJson()).toList()); // Use 'selected' instead of 'card'
+
+    await sp1.setString('card', cardjson);
+  }
+
+
+  Future<void> _pickImage() async {
+    // Use the dialog to get the user's source choice (camera or gallery)
+    final ImageSource? source = await showDialog<ImageSource?>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Select Image Source'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(ImageSource.camera); // Pop with selected source
+              },
+              child: const Text('Camera'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(ImageSource.gallery); // Pop with selected source
+              },
+              child: const Text('Gallery'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // If a source was selected, pick the image asynchronously
+    if (source != null) {
+      final pickedFile = await _picker.pickImage(source: source);
+
+      // Update the state if an image was picked
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = pickedFile;
+        });
+      }
+    }
+  }
+
+
+
+
+  @override
+  void dispose() {
+    // Dispose controllers to avoid memory leaks
+    usernameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Example password list
+
+    return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        shape: CircleBorder(),
+        onPressed: () {
+          _showBottomSheet(context , InputType.user);
+        },
+        child: Icon(Icons.add),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 10,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(onPressed: (){
+                _showBottomSheet(context , InputType.card);
+              },
+                  icon: Icon(Icons.add_card_outlined)),
+              SizedBox(width: 10),
+              Icon(Icons.shield_outlined)
+            ],
+          ),
+        ),
+      ),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: _pickImage, // Open the image picker on tap
+            child: CircleAvatar(
+              radius: 20, // Adjust radius as needed
+              backgroundImage: _imageFile != null
+                  ? FileImage(File(_imageFile!.path)) // Use selected image
+                  : AssetImage(Images.dp) as ImageProvider, // Default image if no image selected
+            ),
+          ),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Hello, Aqeel', style: TextStyle(color: Colors.black)),
+            Text(
+              'Good Morning',
+              style: TextStyle(color: Colors.black54, fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 20),
+
+              // Category Section
+              Text('Category',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => LoginCollection()));
+                    },
+                    child: _buildCategoryButton('login', Icons.vpn_key, Colors.blue[100]),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => BrowseCollection()));
+                    },
+                    child: _buildCategoryButton('browse', Icons.web, Colors.green[100]),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => CardCollection()));
+                    },
+                    child: _buildCategoryButton('card', Icons.credit_card, Colors.pink[100]),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+
+              // Recent Used Section
+              Text('Your Details',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              SizedBox(height: 10),
+
+              // Recent Used Accounts List
+              Card(
+                elevation: 4.0,
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    height: 200, // Set a fixed height for the ListView
+                    child: ListView.separated(
+                      itemCount: accounts.length,
+                      separatorBuilder: (context, index) => SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AccountDetailScreen(
+                                  account: accounts[index],
+                                ),
+                              ),
+                            );
+                          },
+                          child: _buildRecentUsedItem(
+                            'account',
+                            index,
+                            accounts[index].accountUsername,
+                            accounts[index].email,
+                            accounts[index].imagePath,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              Text('Your Card Details',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              // Card Accounts List
+              Card(
+                elevation: 4.0,
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    height: 200, // Set a fixed height for the ListView
+                    child: ListView.separated(
+                      itemCount: cardaccount.length,
+                      separatorBuilder: (context, index) => SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CardDetailScreen(
+                                  card: cardaccount[index],
+                                ),
+                              ),
+                            );
+                          },
+                          child: _buildRecentUsedItem(
+                            'card',
+                            index,
+                            cardaccount[index].bankname,
+                            cardaccount[index].cardHolderName,
+                            cardaccount[index].imagePath,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+
+    );
+  }
+
+  // Widget to build each category button
+  Widget _buildCategoryButton(String label, IconData icon, Color? color , ) {
+    return Column(
+      children: [
+        Container(
+          height: 60,
+          width: 60,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Icon(icon, size: 30, color: Colors.black),
+        ),
+        SizedBox(height: 5),
+        Text(label, style: TextStyle(fontSize: 14)),
+      ],
+    );
+  }
+
+  // Widget to build recent used item
+  Widget _buildRecentUsedItem(String type,int index, String title, String email, String imagePath) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: GestureDetector(
+        onLongPress: () => _showPopupMenu(context, index , type),
+        child: ListTile(
+          leading: Image.asset(imagePath, height: 40, width: 40),
+          title: Text(
+            '@$title',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            email,
+            style: TextStyle(color: Colors.grey),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Bottom sheet function
+  void _showBottomSheet(BuildContext context, InputType inputType) {
+    showModalBottomSheet(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)),
+      ),
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      context: context,
+      builder: (BuildContext context) {
+        return _bottomSheet(inputType: inputType);
+      },
+    );
+  }
+
+  // Bottom sheet widget
+  Widget _bottomSheet({required InputType inputType}) {
+    return Wrap(
+      children: [
+        Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Divider
+              _buildDivider(),
+              const SizedBox(height: 40),
+              // Title
+              const Text(
+                'Your Friendly Password Manager',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              _iconSelector(),
+              const SizedBox(height: 20),
+              // Input Fields
+              if (inputType == InputType.user) ...[
+                _buildUserInputFields(),
+              ] else if (inputType == InputType.card) ...[
+                _buildCardInputFields(),
+              ],
+              const SizedBox(height: 24),
+              // Save Button
+              _mainButton('Save', inputType == InputType.user ? saveValues : saveCardvalues),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+// Method to build the divider
+  Widget _buildDivider() {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.28,
+      height: 5,
+      decoration: BoxDecoration(
+        color: Colors.grey,
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+  }
+
+// Method to build user input fields
+  Widget _buildUserInputFields() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _enterInput('Username', Icons.perm_identity, usernameController, TextInputType.name , 30),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _enterInput('E-mail', Icons.mail_outline_outlined, emailController, TextInputType.emailAddress ,320),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _enterInput('Password', Icons.lock_outline, passwordController, TextInputType.visiblePassword , 15),
+        ),
+      ],
+    );
+  }
+
+// Method to build card input fields
+  Widget _buildCardInputFields() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _enterInput('Bank Name', Icons.account_balance_outlined, _banknameController, TextInputType.name , 30),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _enterInput('Account Name', Icons.perm_identity, _cardHolderNameController, TextInputType.name , 30),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _enterInput('Card Number', Icons.credit_card, _cardNumberController, TextInputType.number , 16),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _enterInput('Expiry Date', Icons.calendar_month_outlined, _expiryDateController, TextInputType.datetime , 10),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: _enterInput('Cvv', Icons.account_balance_wallet_outlined, _cvvController, TextInputType.number , 3),
+        ),
+      ],
+    );
+  }
+
+
+  Widget _iconSelector() {
+    return GestureDetector(
+      onTap: _showIconPicker, // Show icon picker on tap
+      child: Column(
+        children: [
+          // Display the selected icon
+          Image.asset(_selectedIcon, width: 50, height: 50),
+          SizedBox(height: 8),
+          Text('Tap to change icon', style: TextStyle(color: Colors.blue)),
+        ],
+      ),
+    );
+  }
+
+  /* Widget _searchInput(String label) {
+    return TextField(
+      decoration: InputDecoration(
+        hintText: label,
+        prefixIcon: Icon(Icons.search),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
+        ),
+        filled: true,
+        fillColor: Colors.grey[200],
+      ),
+    );
+  } */
+
+  Widget _enterInput(String label, IconData icon, TextEditingController controller, TextInputType keyboardType , int lenght) {
+    return TextField(
+      keyboardType: keyboardType, // Use the passed keyboardType directly
+      controller: controller,
+      maxLength: lenght,
+      decoration: InputDecoration(
+        hintText: label,
+        prefixIcon: Icon(icon),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide.none,
+        ),
+        filled: true,
+        fillColor: Colors.grey[200],
+      ),
+    );
+  }
+
+  Widget _mainButton(String name, onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.black,
+        backgroundColor: Colors.blue[200],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      ),
+      child: Text(
+        name,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  void _showPopupMenu(BuildContext context, int index, String type) async {
+
+    final result = await showMenu(
+      context: context,
+      position: RelativeRect.fill,
+      items: [
+        PopupMenuItem(
+          value: 'delete',
+          child: ListTile(leading: Icon(Icons.delete), title: Text('Delete')),
+        ),
+        PopupMenuItem(
+          value: 'album',
+          child: ListTile(leading: Icon(Icons.album), title: Text('Add to Album')),
+        ),
+        PopupMenuItem(
+          value: 'edit',
+          child: ListTile(leading: Icon(Icons.edit), title: Text('Edit')),
+        ),
+      ],
+    );
+
+    if (result == 'delete') {
+      setState(() {
+        if (type == 'account') {
+          accounts.removeAt(index); // Delete from accounts list
+        } else if (type == 'card') {
+          cardaccount.removeAt(index); // Delete from card list
+        }
+      });
+
+      await savingintosharedprefernce(accounts); // Make sure this function can handle both lists
+      await Cards.saveCards(cardaccount);
+      if (!mounted) return;
+    } else if (result == 'album') {
+      _showOptionsDialog(context, index , type);
+
+    }
+  }
+
+
+  void _showOptionsDialog(BuildContext context, int index, String type) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Select Where To Save'),
+          content: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: SizedBox(
+              height: 120, // Adjust this height as needed
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Only show this button if the type is 'account'
+                  if (type == 'account') ...[
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          login.add(accounts[index]); // Add to recommended login list
+                        });
+                        savingselectedsharedprefernce(login); // Save recommended login accounts
+                        Navigator.pop(context); // Close dialog
+                        _showSnackBar(context, 'Added to Login'); // Show a message
+                      },
+                      child: _buildCategoryButton('login', Icons.vpn_key, Colors.blue[100]!),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          browse.add(accounts[index]); // Add to recommended browse list
+                        });
+                        savingselectedsharedprefernce(browse); // Save recommended browse accounts
+                        Navigator.pop(context); // Close dialog
+                        _showSnackBar(context, 'Added to Browse'); // Show a message
+                      },
+                      child: _buildCategoryButton('browse', Icons.web, Colors.green[100]!),
+                    ),
+                  ],
+
+                  // Only show this button if the type is 'card'
+                  if (type == 'card') ...[
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          card.add(cardaccount[index]); // Add to recommended card list
+                        });
+                        savingextraselectedsharedprefernce(card); // Save recommended card accounts
+                        Navigator.pop(context); // Close dialog
+                        _showSnackBar(context, 'Added to Card'); // Show a message
+                      },
+                      child: _buildCategoryButton('card', Icons.credit_card, Colors.pink[100]!),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+
+  void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+}
+
