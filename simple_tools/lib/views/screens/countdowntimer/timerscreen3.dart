@@ -61,10 +61,6 @@ class TimerScreen3State extends State<TimerScreen3> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Timer is complete!')),
                 );
-                setState(() {
-                  _isRunning =
-                      false; // Reset the running state when timer completes
-                });
               },
             ),
             const SizedBox(height: 20),

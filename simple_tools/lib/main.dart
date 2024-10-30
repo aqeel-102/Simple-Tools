@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:simple_tools/util/app_constants.dart';
-import 'package:simple_tools/views/screens/home/home.dart';
+import 'package:simple_tools/views/screens/home/landingpage.dart';
 
 void main() => runApp(const MyApp());
 
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const Home(title: "Simple Tools"),
+      home: const LandingPage(),
     );
   }
 }

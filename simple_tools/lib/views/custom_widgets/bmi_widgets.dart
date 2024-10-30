@@ -7,7 +7,8 @@ class CustomContainer extends StatelessWidget {
   final Widget? cardchild;
   final Color? colors;
 
-  const CustomContainer({super.key,
+  const CustomContainer({
+    super.key,
     required this.colors,
     this.cardchild,
   });
@@ -38,7 +39,8 @@ class Containcard extends StatelessWidget {
   final IconData icon;
   final String txt;
 
-  const Containcard({super.key,
+  const Containcard({
+    super.key,
     required this.icon,
     required this.txt,
   });
@@ -89,4 +91,3 @@ class RoundButton extends StatelessWidget {
     );
   }
 }
-

@@ -23,7 +23,7 @@ class ZakatCalculatorScreenState extends State<ZakatCalculatorScreen> {
               child: SingleChildScrollView(
                 child: ZakatForm(
 
-                ), // Pass the add history function
+                ),
               ),
             ),
           ],

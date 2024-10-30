@@ -106,7 +106,6 @@ class TimerScreen1State extends State<TimerScreen1> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blueGrey,
       appBar: AppBar(
         title: const Center(child: Text('Timer Tool')),
         actions: [
@@ -144,7 +143,7 @@ class TimerScreen1State extends State<TimerScreen1> {
                   SizedBox(
                     width: 70,
                     child: ScrollableTimeWheel(
-                      label: 'h',
+                      label: 'H',
                       max: 23,
                       initialValue: selectedHours,
                       onChanged: (hour) {
@@ -157,7 +156,7 @@ class TimerScreen1State extends State<TimerScreen1> {
                   SizedBox(
                     width: 70,
                     child: ScrollableTimeWheel(
-                      label: 'm',
+                      label: 'M',
                       max: 59,
                       initialValue: selectedMinutes,
                       onChanged: (minute) {
@@ -170,7 +169,7 @@ class TimerScreen1State extends State<TimerScreen1> {
                   SizedBox(
                     width: 70,
                     child: ScrollableTimeWheel(
-                      label: 's',
+                      label: 'S',
                       max: 59,
                       initialValue: selectedSeconds,
                       onChanged: (second) {
@@ -185,115 +184,160 @@ class TimerScreen1State extends State<TimerScreen1> {
             ),
           ),
           Expanded(
-            child: customTimers.isEmpty
-                ? Center(
-              child: Text(
-                'No custom timers saved.',
-                style: TextStyle(color: Colors.white),
-              ),
-            )
-                : ListView.builder(
-              itemCount: customTimers.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  color: Colors.blueGrey[800],
-                  margin: const EdgeInsets.all(10.0),
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.task_alt,
-                      size: 40,
-                      color: Colors.white,
-                    ),
-                    title: Text(
-                      customTimers[index]['name'],
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                    subtitle: Text(
-                      _formatDuration(customTimers[index]['duration']),
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.white),
-                          onPressed: () async {
-                            final editedTimer = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddEditTimerScreen(
-                                  initialName: customTimers[index]['name'],
-                                  initialDuration: customTimers[index]['duration'],
-                                  initialIcon: customTimers[index]['icon'],
-                                  initialRingtone: customTimers[index]['ringtone'], // Save ringtone too
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(28, 10, 28, 10), // Horizontal padding
+              child: customTimers.isEmpty
+                  ? Center(
+                child: Text(
+                  'No custom timers saved.',
+                  style: TextStyle(color: Colors.white),
+                ),
+              )
+                  : ListView.builder(
+                itemCount: customTimers.length,
+                itemBuilder: (context, index) {
+                  return Card(
+                    color: Colors.blueGrey[800],
+                    margin: const EdgeInsets.symmetric(vertical: 8.0), // Optional vertical margin
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.task_alt,
+                        size: 40,
+                        color: Colors.white,
+                      ),
+                      title: Text(
+                        customTimers[index]['name'],
+                        style: const TextStyle(
+                            color: Colors.white, fontSize: 18),
+                      ),
+                      subtitle: Text(
+                        _formatDuration(customTimers[index]['duration']),
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.white),
+                            onPressed: () async {
+                              final editedTimer = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddEditTimerScreen(
+                                    initialName: customTimers[index]['name'],
+                                    initialDuration:
+                                    customTimers[index]['duration'],
+                                    initialIcon:
+                                    customTimers[index]['icon'],
+                                    initialRingtone:
+                                    customTimers[index]['ringtone'],
+                                  ),
                                 ),
-                              ),
-                            );
-                            if (editedTimer != null) {
-                              _editCustomTimer(index, editedTimer['name'],
-                                  editedTimer['duration'], editedTimer['icon']);
-                            }
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: const Text('Delete Timer'),
-                                  content: const Text('Are you sure you want to delete this timer?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        _deleteCustomTimer(index);
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Text('Delete'),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ],
+                              );
+                              if (editedTimer != null) {
+                                _editCustomTimer(
+                                    index,
+                                    editedTimer['name'],
+                                    editedTimer['duration'],
+                                    editedTimer['icon']);
+                              }
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Delete Timer'),
+                                    content: const Text(
+                                        'Are you sure you want to delete this timer?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          _deleteCustomTimer(index);
+                                          Navigator.pop(context);
+                                        },
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        setState(() {
+                          selectedHours =
+                              customTimers[index]['duration'].inHours;
+                          selectedMinutes = customTimers[index]['duration']
+                              .inMinutes %
+                              60;
+                          selectedSeconds = customTimers[index]['duration']
+                              .inSeconds %
+                              60;
+                        });
+                        navigateToTimerScreen();
+                      },
                     ),
-                    onTap: () {
-                      setState(() {
-                        selectedHours = customTimers[index]['duration'].inHours;
-                        selectedMinutes = customTimers[index]['duration'].inMinutes % 60;
-                        selectedSeconds = customTimers[index]['duration'].inSeconds % 60;
-                      });
-                      navigateToTimerScreen();
-                    },
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
-          IconButton(
-            onPressed: () {
-              if (selectedHours == 0 &&
-                  selectedMinutes == 0 &&
-                  selectedSeconds == 0) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please set a valid duration.'),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      if (selectedHours == 0 && selectedMinutes == 0 && selectedSeconds == 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please set a valid duration.'),
+                          ),
+                        );
+                      } else {
+                        navigateToTimerScreen();
+                      }
+                    },
+                    icon: const Icon(Icons.play_circle_outline_rounded, size: 50),
+                    color: Colors.blueGrey[800], // Icon color
+                    tooltip: 'Start Timer', // Tooltip for accessibility
                   ),
-                );
-              } else {
-                navigateToTimerScreen();
-              }
-            },
-            icon: const Icon(Icons.play_circle_outline_rounded, size: 70),
+                  const SizedBox(width: 20), // Spacing between buttons
+                  IconButton(
+                    onPressed: () async {
+                      // Navigate to Add/Edit Timer Screen
+                      final newTimer = await Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AddEditTimerScreen()),
+                      );
+                      if (newTimer != null) {
+                        _addCustomTimer(newTimer['name'], newTimer['duration'], newTimer['icon']);
+                      }
+                    },
+                    icon: const Icon(Icons.add, size: 50), // Increase size to match
+                    color: Colors.blueGrey[800], // Icon color
+                    tooltip: 'Add Timer', // Tooltip for accessibility
+                  ),
+                ],
+              )
+
+            ]
           ),
         ],
       ),

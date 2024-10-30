@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart'; // Import the intl package for date formatting
 
 class ZakatHistoryList extends StatefulWidget {
   const ZakatHistoryList({super.key});
@@ -43,10 +44,27 @@ class ZakatHistoryListState extends State<ZakatHistoryList> {
 
   // Function to delete an entry from history
   void _deleteHistory(int index) {
+    final deletedEntry = zakatHistory[index];
     setState(() {
       zakatHistory.removeAt(index);  // Remove item from list
       _saveZakatHistory();  // Save updated list to SharedPreferences
     });
+
+    // Show a Snackbar to confirm deletion
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Deleted: ${deletedEntry.zakatAmount.toStringAsFixed(2)} ${deletedEntry.currency}'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            setState(() {
+              zakatHistory.insert(index, deletedEntry);
+              _saveZakatHistory();
+            });
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -60,42 +78,50 @@ class ZakatHistoryListState extends State<ZakatHistoryList> {
         itemCount: zakatHistory.length,
         itemBuilder: (context, index) {
           final history = zakatHistory[index];
-          return ListTile(
-            title: Text(
-                'Zakat Amount: \$${history.zakatAmount.toStringAsFixed(2)}'),
-            subtitle: Text(
-              'Total Assets: \$${history.totalAssets.toStringAsFixed(2)}\nDate: ${history.date.toLocal()}',
-            ),
-            trailing: IconButton(
-              icon: Icon(Icons.delete, color: Colors.red),
-              onPressed: () {
-                // Show a confirmation dialog before deleting
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text('Delete History'),
-                      content: Text(
-                          'Are you sure you want to delete this history entry?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();  // Close dialog
-                          },
-                          child: Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            _deleteHistory(index);  // Delete the entry
-                            Navigator.of(context).pop();  // Close dialog
-                          },
-                          child: Text('Delete'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
+          // Format the date to hh:mm:ss
+          String formattedTime = DateFormat('HH:mm:ss').format(history.date.toLocal());
+          return Card(
+            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            elevation: 5,
+            child: ListTile(
+              title: Text(
+                'Zakat Amount: ${history.currency} ${history.zakatAmount.toStringAsFixed(2)}',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                'Total Assets: ${history.currency} ${history.totalAssets.toStringAsFixed(2)}\nDate: $formattedTime',
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+              trailing: IconButton(
+                icon: Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  // Show a confirmation dialog before deleting
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Delete History'),
+                        content: Text('Are you sure you want to delete this history entry?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();  // Close dialog
+                            },
+                            child: Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              _deleteHistory(index);  // Delete the entry
+                              Navigator.of(context).pop();  // Close dialog
+                            },
+                            child: Text('Delete'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           );
         },
@@ -111,28 +137,30 @@ class ZakatHistory {
   final DateTime date;
   final double zakatAmount;
   final double totalAssets;
+  final String currency;
 
   ZakatHistory({
     required this.date,
     required this.zakatAmount,
     required this.totalAssets,
+    required this.currency,
   });
 
-  // Convert ZakatHistory to a Map to store in SharedPreferences
   Map<String, dynamic> toMap() {
     return {
       'date': date.toIso8601String(),
       'zakatAmount': zakatAmount,
       'totalAssets': totalAssets,
+      'currency': currency,
     };
   }
 
-  // Create ZakatHistory from a Map
   factory ZakatHistory.fromMap(Map<String, dynamic> map) {
     return ZakatHistory(
       date: DateTime.parse(map['date']),
       zakatAmount: map['zakatAmount'],
       totalAssets: map['totalAssets'],
+      currency: map['currency'],
     );
   }
 }

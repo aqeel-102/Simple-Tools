@@ -14,29 +14,9 @@ class ZakatCalculatorAppState extends State<ZakatCalculatorApp> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: MaterialApp(
-        title: 'Zakat Calculator',
-        theme: ThemeData(
-          primarySwatch: Colors.blueGrey,
-          scaffoldBackgroundColor: Colors.blueGrey,
-          textTheme: TextTheme(
-            bodyLarge: TextStyle(color: Colors.black),
-            bodyMedium: TextStyle(color: Colors.white),
-            titleLarge: TextStyle(color: Colors.white),
-          ),
-        ),
-        home: Scaffold(
+    return Scaffold(
           appBar: AppBar(
             title: Center(child: Text("Zakat Calculator")),
-            actions: [
-              IconButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/previousScreen'); // Replace '/previousScreen' with the correct route
-                },
-                icon: Icon(Icons.arrow_back),
-              ),
-            ],
           ),
           body: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -124,8 +104,6 @@ class ZakatCalculatorAppState extends State<ZakatCalculatorApp> {
               ),
             ],
           ),
-        ),
-      ),
-    );
+        );
   }
 }

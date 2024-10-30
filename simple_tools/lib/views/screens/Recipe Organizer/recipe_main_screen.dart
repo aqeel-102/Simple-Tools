@@ -16,21 +16,32 @@ class RecipeMainScreen extends StatefulWidget {
 }
 
 class _RecipeMainScreenState extends State<RecipeMainScreen> {
-
   File? _image; // Variable to hold the selected image file
+  late Future<List<RecipeDetails>> _recipesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _recipesFuture = fetchRecipes();
+  }
 
   // Method to pick an image either from the camera or the gallery
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     // Show options to the user: either take a photo or select from gallery
     final XFile? pickedImage = await picker.pickImage(
-      source: ImageSource.gallery, // Change this to ImageSource.camera for taking a photo
+      source: ImageSource
+          .gallery, // Change this to ImageSource.camera for taking a photo
     );
 
     if (pickedImage != null) {
       setState(() {
         _image = File(pickedImage.path); // Update the image state
       });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Profile picture updated')),
+      );
     }
   }
 
@@ -62,8 +73,6 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
     );
   }
 
-
-
   // Fetch saved recipes from SharedPreferences
   Future<List<RecipeDetails>> fetchRecipes() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -79,7 +88,8 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
       try {
         recipeDetailsList.add(RecipeDetails.fromJson(json.decode(recipeJson)));
       } catch (e) {
-        debugPrint("Error decoding recipe: $e"); // Handle any errors in decoding
+        debugPrint(
+            "Error decoding recipe: $e"); // Handle any errors in decoding
       }
     }
 
@@ -93,10 +103,23 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
 
     if (recipesList != null && recipesList.isNotEmpty) {
       recipesList.removeAt(index); // Remove the recipe at the specified index
-      await prefs.setStringList('recipes', recipesList); // Save the updated list
+      await prefs.setStringList('recipes', recipesList);
+      if (!mounted) return; // Save the updated list
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Recipe deleted')),
+      );
+      setState(() {
+        _recipesFuture = fetchRecipes(); // Refresh the recipes list
+      });
     }
   }
 
+  // Refresh recipes list
+  void refreshRecipes() {
+    setState(() {
+      _recipesFuture = fetchRecipes();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,12 +146,15 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         GestureDetector(
-                          onTap: _showChangeProfilePictureDialog, // Show dialog on tap
+                          onTap:
+                              _showChangeProfilePictureDialog, // Show dialog on tap
                           child: CircleAvatar(
                             radius: 40,
                             backgroundImage: _image != null
-                                ? FileImage(_image!) // If image is selected, display it
-                                : AssetImage('assets/images/compass.png') as ImageProvider, // Default image
+                                ? FileImage(
+                                    _image!) // If image is selected, display it
+                                : AssetImage('assets/images/compass.png')
+                                    as ImageProvider, // Default image
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -147,17 +173,18 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
           Expanded(
             flex: 2,
             child: FutureBuilder<List<RecipeDetails>>(
-              future: fetchRecipes(),
+              future: _recipesFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                       child:
-                      CircularProgressIndicator()); // Show a loading spinner while fetching recipes
+                          CircularProgressIndicator()); // Show a loading spinner while fetching recipes
                 } else if (snapshot.hasError) {
                   return const Center(
                       child: Text('Error loading recipes')); // Handle error
                 } else if (snapshot.data == null || snapshot.data!.isEmpty) {
-                  return const Center(child: Text("No Recipes Found")); // No recipes saved
+                  return const Center(
+                      child: Text("No Recipes Found")); // No recipes saved
                 } else {
                   // Display list of recipes
                   List<RecipeDetails> recipes = snapshot.data!;
@@ -165,12 +192,12 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
                     padding: const EdgeInsets.all(20.0),
                     child: GridView.builder(
                       gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2, // 2 items per row
                         crossAxisSpacing: 10, // spacing between columns
                         mainAxisSpacing: 10, // spacing between rows
                         childAspectRatio:
-                        2.5, // Adjusted aspect ratio to make boxes smaller
+                            2.5, // Adjusted aspect ratio to make boxes smaller
                       ),
                       itemCount: recipes.length, // Ensure item count is set
                       itemBuilder: (context, index) {
@@ -185,24 +212,33 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
                                   actions: [
                                     TextButton(
                                       onPressed: () {
+                                        Navigator.of(context)
+                                            .pop(); // Close the dialog
                                         // Navigate to the Add Recipe screen for editing
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => Addrecipescreen(recipeToEdit: recipes[index]),
+                                            builder: (context) =>
+                                                Addrecipescreen(
+                                                    recipeToEdit:
+                                                        recipes[index]),
                                           ),
-                                        );
+                                        ).then((_) {
+                                          refreshRecipes(); // Refresh recipes after editing
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content:
+                                                    Text('Recipe updated')),
+                                          );
+                                        });
                                       },
                                       child: Text('Edit'),
                                     ),
-
                                     TextButton(
                                       onPressed: () {
                                         // Delete the recipe
                                         deleteRecipe(index).then((_) {
-                                          setState(() {
-                                            // Refresh the UI after deleting
-                                          });
                                           Navigator.of(context).pop();
                                         });
                                       },
@@ -218,8 +254,8 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) => MyCustomReciepe(
-                                    recipe: recipes[index],
-                                  )),
+                                        recipe: recipes[index],
+                                      )),
                             );
                           },
                           child: Container(
@@ -241,10 +277,9 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
                                 Text(
                                   recipes[index].name,
                                   style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 5),
@@ -274,7 +309,12 @@ class _RecipeMainScreenState extends State<RecipeMainScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const Addrecipescreen()),
-          );
+          ).then((_) {
+            refreshRecipes(); // Refresh recipes after adding a new one
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('New recipe added')),
+            );
+          });
         },
         child: const Icon(Icons.add),
       ),

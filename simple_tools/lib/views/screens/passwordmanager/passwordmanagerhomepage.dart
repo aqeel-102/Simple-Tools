@@ -1,7 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_tools/views/screens/passwordmanager/password_details.dart';
 import 'package:simple_tools/views/screens/passwordmanager/password_model.dart';
@@ -28,18 +26,19 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
   TextEditingController usernameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  TextEditingController accountType = TextEditingController();
   final TextEditingController _cardNumberController = TextEditingController();
   final TextEditingController _banknameController = TextEditingController();
   final TextEditingController _cardHolderNameController = TextEditingController();
   final TextEditingController _expiryDateController = TextEditingController();
   final TextEditingController _cvvController = TextEditingController();
+
   List<Password> accounts = [];
   List<Cards>cardaccount=[];
   List<Password> login = [];
   List<Password> browse = [];
   List<Cards> card = [];
-  late ImagePicker _picker;
-  XFile? _imageFile;
+  int selectedList = 1;
 
   String _selectedIcon = Images.defaultval;
   final List<String> _availableIcons = [
@@ -98,7 +97,6 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
   void initState() {
     super.initState();
     _loadAccounts(); // Load accounts when the widget is initialized
-    _picker = ImagePicker();
   }
 
   // Function to load accounts from SharedPreferences
@@ -150,10 +148,14 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
       usernameController.clear();
       emailController.clear();
       passwordController.clear();
+      accountType.clear();
+
 
       // Close the bottom sheet after saving
       Navigator.pop(context);
     } else {
+      accountType.clear();
+      _selectedIcon = Images.defaultval;
       Navigator.pop(context);
       // Show error Snackbar if fields are empty
       ScaffoldMessenger.of(context).showSnackBar(
@@ -183,6 +185,7 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
         cardCvv: _cvvController.text,
         bankname: _banknameController.text,
       );
+
 
       setState(() {
         cardaccount.add(newCard); // Add to the list of accounts/cards
@@ -252,43 +255,6 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
   }
 
 
-  Future<void> _pickImage() async {
-    // Use the dialog to get the user's source choice (camera or gallery)
-    final ImageSource? source = await showDialog<ImageSource?>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Select Image Source'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(ImageSource.camera); // Pop with selected source
-              },
-              child: const Text('Camera'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(ImageSource.gallery); // Pop with selected source
-              },
-              child: const Text('Gallery'),
-            ),
-          ],
-        );
-      },
-    );
-
-    // If a source was selected, pick the image asynchronously
-    if (source != null) {
-      final pickedFile = await _picker.pickImage(source: source);
-
-      // Update the state if an image was picked
-      if (pickedFile != null) {
-        setState(() {
-          _imageFile = pickedFile;
-        });
-      }
-    }
-  }
 
 
 
@@ -299,6 +265,7 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
     usernameController.dispose();
     emailController.dispose();
     passwordController.dispose();
+    accountType.dispose();
     super.dispose();
   }
 
@@ -334,150 +301,183 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
           ),
         ),
       ),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: GestureDetector(
-            onTap: _pickImage, // Open the image picker on tap
-            child: CircleAvatar(
-              radius: 20, // Adjust radius as needed
-              backgroundImage: _imageFile != null
-                  ? FileImage(File(_imageFile!.path)) // Use selected image
-                  : AssetImage(Images.dp) as ImageProvider, // Default image if no image selected
-            ),
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Hello, Aqeel', style: TextStyle(color: Colors.black)),
-            Text(
-              'Good Morning',
-              style: TextStyle(color: Colors.black54, fontSize: 14),
-            ),
-          ],
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 20),
 
-              // Category Section
-              Text('Category',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => LoginCollection()));
-                    },
-                    child: _buildCategoryButton('login', Icons.vpn_key, Colors.blue[100]),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => BrowseCollection()));
-                    },
-                    child: _buildCategoryButton('browse', Icons.web, Colors.green[100]),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => CardCollection()));
-                    },
-                    child: _buildCategoryButton('card', Icons.credit_card, Colors.pink[100]),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _searchInput('Search Password'),
+
+                SizedBox(height: 20),
+
+                // Category Section
+                Text('Category',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => LoginCollection()));
+                      },
+                      child: _buildCategoryButton('login', Icons.vpn_key, Colors.blue[100]),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => BrowseCollection()));
+                      },
+                      child: _buildCategoryButton('browse', Icons.web, Colors.green[100]),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => CardCollection()));
+                      },
+                      child: _buildCategoryButton('card', Icons.credit_card, Colors.pink[100]),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    spreadRadius: 2,
                   ),
                 ],
               ),
-              SizedBox(height: 20),
-
-              // Recent Used Section
-              Text('Your Details',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              SizedBox(height: 10),
-
-              // Recent Used Accounts List
-              Card(
-                elevation: 4.0,
-                margin: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: SizedBox(
-                    height: 200, // Set a fixed height for the ListView
-                    child: ListView.separated(
-                      itemCount: accounts.length,
-                      separatorBuilder: (context, index) => SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AccountDetailScreen(
-                                  account: accounts[index],
-                                ),
-                              ),
-                            );
-                          },
-                          child: _buildRecentUsedItem(
-                            'account',
-                            index,
-                            accounts[index].accountUsername,
-                            accounts[index].email,
-                            accounts[index].imagePath,
+              child: Column(
+                children: [
+                  // Tab-like Buttons for Selection
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => setState(() => selectedList = 1),
+                          style: TextButton.styleFrom(
+                            backgroundColor: selectedList == 1 ? Colors.grey : Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
-              Text('Your Card Details',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              // Card Accounts List
-              Card(
-                elevation: 4.0,
-                margin: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: SizedBox(
-                    height: 200, // Set a fixed height for the ListView
-                    child: ListView.separated(
-                      itemCount: cardaccount.length,
-                      separatorBuilder: (context, index) => SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CardDetailScreen(
-                                  card: cardaccount[index],
-                                ),
-                              ),
-                            );
-                          },
-                          child: _buildRecentUsedItem(
-                            'card',
-                            index,
-                            cardaccount[index].bankname,
-                            cardaccount[index].cardHolderName,
-                            cardaccount[index].imagePath,
+                          child: Text(
+                            'Passwords',
+                            style: TextStyle(
+                              color: selectedList == 1 ? Colors.white : Colors.black54,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => setState(() => selectedList = 2),
+                          style: TextButton.styleFrom(
+                            backgroundColor: selectedList == 2 ? Colors.grey : Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          ),
+                          child: Text(
+                            'Cards',
+                            style: TextStyle(
+                              color: selectedList == 2 ? Colors.white : Colors.black54,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                  const SizedBox(height: 16),
+
+                  // List View Based on Selected Tab
+              AnimatedSwitcher(
+                duration: Duration(milliseconds: 300),
+                child: selectedList == 1
+                      ? Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: SizedBox(
+                          height: 350,
+                          child: ListView.separated(
+                            itemCount: accounts.length,
+                            separatorBuilder: (context, index) => const SizedBox(height: 10),
+                            itemBuilder: (context, index) {
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AccountDetailScreen(
+                                        account: accounts[index],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: _buildRecentUsedItem(
+                                  'account',
+                                  index,
+                                  accounts[index].accountUsername,
+                                  accounts[index].email,
+                                  accounts[index].imagePath,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      )
+                      : Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: SizedBox(
+                          height: 350,
+                          child: ListView.separated(
+                            itemCount: cardaccount.length,
+                            separatorBuilder: (context, index) => const SizedBox(height: 10),
+                            itemBuilder: (context, index) {
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CardDetailScreen(
+                                        card: cardaccount[index],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: _buildRecentUsedItem(
+                                  'card',
+                                  index,
+                                  cardaccount[index].bankname,
+                                  cardaccount[index].cardHolderName,
+                                  cardaccount[index].imagePath,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+              ),],
               ),
-            ],
+            ),
+
+
+              ],
+            ),
           ),
         ),
       ),
@@ -547,31 +547,33 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
         Container(
           height: MediaQuery.of(context).size.height * 0.8,
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Divider
-              _buildDivider(),
-              const SizedBox(height: 40),
-              // Title
-              const Text(
-                'Your Friendly Password Manager',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              _iconSelector(),
-              const SizedBox(height: 20),
-              // Input Fields
-              if (inputType == InputType.user) ...[
-                _buildUserInputFields(),
-              ] else if (inputType == InputType.card) ...[
-                _buildCardInputFields(),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Divider
+                _buildDivider(),
+                const SizedBox(height: 40),
+                // Title
+                const Text(
+                  'Your Friendly Password Manager',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                _iconSelector(),
+                const SizedBox(height: 20),
+                // Input Fields
+                if (inputType == InputType.user) ...[
+                  _buildUserInputFields(),
+                ] else if (inputType == InputType.card) ...[
+                  _buildCardInputFields(),
+                ],
+                const SizedBox(height: 24),
+                // Save Button
+                _mainButton('Save', inputType == InputType.user ? saveValues : saveCardvalues),
               ],
-              const SizedBox(height: 24),
-              // Save Button
-              _mainButton('Save', inputType == InputType.user ? saveValues : saveCardvalues),
-            ],
+            ),
           ),
         ),
       ],
@@ -593,22 +595,34 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
 // Method to build user input fields
   Widget _buildUserInputFields() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: _enterInput('Username', Icons.perm_identity, usernameController, TextInputType.name , 30),
+        Row(
+          children: [
+            Expanded(
+              child: _enterInput(
+                'Account Type',
+                Icons.perm_identity,
+                accountType,
+                TextInputType.name,
+                30,
+                onChanged: (value) {
+                  _updateIcon(); // Call _updateIcon when the user submits the account type
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(child: _enterInput('Username', Icons.perm_identity, usernameController, TextInputType.name, 30)),
+          ],
         ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: _enterInput('E-mail', Icons.mail_outline_outlined, emailController, TextInputType.emailAddress ,320),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: _enterInput('Password', Icons.lock_outline, passwordController, TextInputType.visiblePassword , 15),
-        ),
+        const SizedBox(height: 16),
+        _enterInput('E-mail', Icons.mail_outline_outlined, emailController, TextInputType.emailAddress, 320),
+        const SizedBox(height: 16),
+        _enterInput('Password', Icons.lock_outline, passwordController, TextInputType.visiblePassword, 15),
       ],
     );
   }
+
 
 // Method to build card input fields
   Widget _buildCardInputFields() {
@@ -653,7 +667,7 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
     );
   }
 
-  /* Widget _searchInput(String label) {
+  Widget _searchInput(String label) {
     return TextField(
       decoration: InputDecoration(
         hintText: label,
@@ -666,13 +680,21 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
         fillColor: Colors.grey[200],
       ),
     );
-  } */
+  }
 
-  Widget _enterInput(String label, IconData icon, TextEditingController controller, TextInputType keyboardType , int lenght) {
+  Widget _enterInput(
+      String label,
+      IconData icon,
+      TextEditingController controller,
+      TextInputType keyboardType,
+      int length, {
+        void Function(String)? onChanged, // Change from VoidCallback to Function(String)
+      }) {
     return TextField(
-      keyboardType: keyboardType, // Use the passed keyboardType directly
+      keyboardType: keyboardType,
       controller: controller,
-      maxLength: lenght,
+      maxLength: length,
+      onSubmitted: onChanged, // Set the onSubmitted callback here
       decoration: InputDecoration(
         hintText: label,
         prefixIcon: Icon(icon),
@@ -685,7 +707,6 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
       ),
     );
   }
-
   Widget _mainButton(String name, onPressed) {
     return ElevatedButton(
       onPressed: onPressed,
@@ -708,7 +729,6 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
   }
 
   void _showPopupMenu(BuildContext context, int index, String type) async {
-
     final result = await showMenu(
       context: context,
       position: RelativeRect.fill,
@@ -740,9 +760,9 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
       await savingintosharedprefernce(accounts); // Make sure this function can handle both lists
       await Cards.saveCards(cardaccount);
       if (!mounted) return;
-    } else if (result == 'album') {
+    }
+    else if (result == 'album' ) {
       _showOptionsDialog(context, index , type);
-
     }
   }
 
@@ -822,5 +842,61 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
       ),
     );
   }
+
+
+  void _updateIcon() {
+    String input = accountType.text.toLowerCase(); // Convert to lowercase
+    setState(() {
+      // Match the icon based on input text
+      if (input.contains('google')) {
+        _selectedIcon = Images.google;
+      } else if (input.contains('facebook')) {
+        _selectedIcon = Images.facebook;
+      } else if (input.contains('linkedin')) {
+        _selectedIcon = Images.linkedin;
+      }
+      else if (input.contains('whatsapp')) {
+        _selectedIcon = Images.whatsapp;
+      }
+      else if (input.contains('instagram')) {
+        _selectedIcon = Images.instagram;
+      }
+      else if (input.contains('netflix')) {
+        _selectedIcon = Images.netflix;
+      }
+      else {
+        _selectedIcon = Images.defaultval; // Default icon
+      }
+    });
+  }
+
 }
+
+ /*void _updateCardIcon() {
+  String input = accountType.text.toLowerCase(); // Convert to lowercase
+  setState(() {
+    // Match the icon based on input text
+    if (input.contains('google')) {
+      _selectedIcon = Images.google;
+    } else if (input.contains('facebook')) {
+      _selectedIcon = Images.facebook;
+    } else if (input.contains('linkedin')) {
+      _selectedIcon = Images.linkedin;
+    }
+    else if (input.contains('whatsapp')) {
+      _selectedIcon = Images.whatsapp;
+    }
+    else if (input.contains('instagram')) {
+      _selectedIcon = Images.instagram;
+    }
+    else if (input.contains('netflix')) {
+      _selectedIcon = Images.netflix;
+    }
+    else {
+      _selectedIcon = Images.defaultval; // Default icon
+    }
+  });
+}*/
+
+
 

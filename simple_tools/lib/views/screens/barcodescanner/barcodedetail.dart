@@ -1,25 +1,29 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../util/app_constants.dart';
 
-class BarcodeDetailsScreen extends StatelessWidget {
-  final String barcode;
+class BarcodeDetailScreen extends StatelessWidget {
+  final String barcodeData;
 
-  const BarcodeDetailsScreen({super.key, required this.barcode});
+  const BarcodeDetailScreen({super.key, required this.barcodeData});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Barcode Details'),
+        title: const Text(AppConstants.barcodeReaderTitle),
+        backgroundColor: AppConstants.mainColor,
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Scanned Content: $barcode'),
-            const SizedBox(height: 20),
+            Text(
+              'Scanned Content: $barcodeData',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 20),
             _buildActionButtons(context),
           ],
         ),
@@ -31,10 +35,10 @@ class BarcodeDetailsScreen extends StatelessWidget {
     List<Widget> buttons = [];
 
     // Action for URLs
-    if (Uri.tryParse(barcode)?.hasAbsolutePath ?? false) {
+    if (Uri.tryParse(barcodeData)?.hasAbsolutePath ?? false) {
       buttons.add(ElevatedButton(
         onPressed: () async {
-          final Uri url = Uri.parse(barcode);
+          final Uri url = Uri.parse(barcodeData);
           if (await canLaunchUrl(url)) {
             await launchUrl(url);
           }
@@ -44,14 +48,14 @@ class BarcodeDetailsScreen extends StatelessWidget {
     }
 
     // Action for email addresses
-    if (barcode.contains('@')) {
+    if (barcodeData.contains('@')) {
       buttons.add(ElevatedButton(
         onPressed: () {
           final Uri emailUri = Uri(
             scheme: 'mailto',
-            path: barcode,
+            path: barcodeData,
           );
-          launchUrl(emailUri.toString() as Uri);
+          launchUrl(emailUri);
         },
         child: const Text('Send Email'),
       ));
@@ -60,9 +64,9 @@ class BarcodeDetailsScreen extends StatelessWidget {
     // Action for plain text (Copy to clipboard)
     buttons.add(ElevatedButton(
       onPressed: () {
-        Clipboard.setData(ClipboardData(text: barcode));
+        Clipboard.setData(ClipboardData(text: barcodeData));
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Text copied to clipboard')),
+          const SnackBar(content: Text(AppConstants.copy)),
         );
       },
       child: const Text('Copy Text'),

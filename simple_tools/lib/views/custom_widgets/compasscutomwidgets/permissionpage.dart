@@ -1,5 +1,7 @@
+// permission_page.dart
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../../../util/app_constants.dart';
 
 class PermissionPage extends StatelessWidget {
   final Function onPermissionsGranted;
@@ -12,18 +14,19 @@ class PermissionPage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text('Location Permission Required'),
+          Text(AppConstants.locationPermissionMessage),
           ElevatedButton(
-            child: Text('Request Permissions'),
+            child: Text(AppConstants.requestPermissionsButtonText),
             onPressed: () async {
+              // Request location permissions
               Permission.locationWhenInUse.request().then((ignored) {
-                onPermissionsGranted();
+                onPermissionsGranted(); // Callback when permissions are granted
               });
             },
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           ElevatedButton(
-            child: Text('Open App Settings'),
+            child: Text(AppConstants.openAppSettingsButtonText),
             onPressed: () {
               openAppSettings().then((opened) {
                 // Handle result if needed

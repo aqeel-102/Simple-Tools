@@ -1,0 +1,235 @@
+import 'dart:convert';
+import 'package:flutter/cupertino.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simple_tools/util/app_constants.dart';
+import 'package:simple_tools/views/screens/zakatcalculator/zakathistory.dart';
+
+class ZakatCalculator {
+
+
+  final double gold;
+  final double silver;
+  final double cash;
+  final double businessAssets;
+  final double liabilities;
+  final String currency;
+  final String unit;
+
+
+  ZakatCalculator({
+    required this.currency,
+    required this.unit,
+    required this.gold,
+    required this.silver,
+    required this.cash,
+    required this.businessAssets,
+    required this.liabilities,
+  });
+
+  String getApiUrl(String currency, String unit) {
+    return '${AppConstants.baseUrl}?api_key=${AppConstants.apiKey}&currency=$currency&unit=$unit';
+  }
+
+  Future<void> saveZakatHistory(ZakatHistory history) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? historyString = prefs.getString('zakatHistory');
+
+      List<ZakatHistory> currentHistory = [];
+      if (historyString != null) {
+        try {
+          // Decode existing history
+          final List<dynamic> historyList = json.decode(historyString);
+          currentHistory = historyList.map((item) => ZakatHistory.fromMap(item)).toList();
+        } catch (e) {
+          debugPrint('Error decoding history: $e');
+        }
+      }
+
+      // Add the new history entry
+      currentHistory.add(history);
+
+      // Save updated history back to SharedPreferences
+      final String encodedData = json.encode(currentHistory.map((item) => item.toMap()).toList());
+      await prefs.setString('zakatHistory', encodedData);
+
+      debugPrint('Zakat history saved successfully!');
+    } catch (e) {
+      debugPrint('Error saving zakat history: $e');
+    }
+  }
+
+  double? goldPrice;
+  double? silverPrice;
+
+  Future<double> get totalAssets async {
+    debugPrint('Fetching gold price from: $currency, $unit');
+
+    // Store fetched prices in global variables
+    goldPrice ??= await getCurrentGoldPrice(currency, unit);
+    silverPrice ??= await getCurrentSilverPrice(currency, unit);
+
+    double calculatedGold = goldPrice! * gold;
+    double calculatedSilver = silverPrice! * silver;
+
+    double currentAsset = calculatedGold + calculatedSilver + cash + businessAssets;
+    double totalAmountOfAsset = currentAsset - liabilities;
+
+    debugPrint('Gold Price: $goldPrice, Silver Price: $silverPrice');
+    debugPrint('Total Assets: $totalAmountOfAsset');
+
+    double nisabGoldThreshold;
+    double nisabSilverThreshold;
+
+    if (unit == 'toz') {
+      nisabGoldThreshold = 7.5 * goldPrice!;
+      nisabSilverThreshold = 52.5 * silverPrice!;
+    } else if (unit == 'g') {
+      nisabGoldThreshold = 87.48 * goldPrice!;
+      nisabSilverThreshold = 612.15 * silverPrice!;
+    } else if (unit == 'kg') {
+      nisabGoldThreshold = 0.08747859375 * goldPrice!;
+      nisabSilverThreshold = 0.61235015625 * silverPrice!;
+    } else {
+      throw Exception('Invalid unit');
+    }
+
+    return (totalAmountOfAsset >= nisabGoldThreshold || totalAmountOfAsset >= nisabSilverThreshold)
+        ? totalAmountOfAsset
+        : 0;
+  }
+// Fetch the current gold price from the API
+  Future<double> getCurrentGoldPrice(String currency, String unit) async {
+    try {
+      final url =  getApiUrl(currency, unit);
+
+      debugPrint('Fetching gold price from: $url'); // Log the URL being requested
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Log the response for debugging
+        debugPrint('API Gold Price Data: $data');
+
+        // Safely access the gold price with null-aware operators
+        final goldPrice = data['metals']?['gold'];
+
+        if (goldPrice != null) {
+          // Return the gold price, converting to double if necessary
+          return (goldPrice is double) ? goldPrice : double.parse(goldPrice.toString());
+        } else {
+          throw Exception('Gold price data not available in response');
+        }
+      } else {
+        throw Exception('Failed to load gold price. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching gold price: $e');
+      throw Exception('Error fetching gold price: $e'); // Rethrow the error for upstream handling
+    }
+  }
+
+// Fetch the current silver price from the API
+  Future<double> getCurrentSilverPrice(String currency, String unit) async {
+    try {
+      final url =  getApiUrl(currency, unit);
+
+      debugPrint('Fetching silver price from: $url'); // Log the URL being requested
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Log the response for debugging
+        debugPrint('API Silver Price Data: $data');
+
+        // Safely access the silver price with null-aware operators
+        final silverPrice = data['metals']?['silver'];
+
+        if (silverPrice != null) {
+          // Return the silver price, converting to double if necessary
+          return (silverPrice is double) ? silverPrice : double.parse(silverPrice.toString());
+        } else {
+          throw Exception('Silver price data not available in response');
+        }
+      } else {
+        throw Exception('Failed to load silver price. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetching silver price: $e');
+      throw Exception('Error fetching silver price: $e'); // Rethrow the error for upstream handling
+    }
+  }
+  Future<String> calculateZakat() async {
+    try {
+      double returnValue = await totalAssets;
+
+      // Check if returnValue is null or invalid
+      if (returnValue <= 0) {
+        return "No valid assets found for zakat calculation.";
+      }
+
+
+      // Ensure gold and silver prices are valid
+      if (goldPrice == 0 || silverPrice == 0) {
+        return "Failed to retrieve gold or silver prices.";
+      }
+
+      double nisabGoldThreshold;
+      double nisabSilverThreshold;
+
+      // Calculate nisab thresholds based on the selected unit
+      String unitLower = unit.toLowerCase();
+      if (unitLower == 'toz') {
+        nisabGoldThreshold = 7.5 * goldPrice!; // 7.5 tolas
+        nisabSilverThreshold = 52.5 * silverPrice!; // 52.5 tolas
+      } else if (unitLower == 'g') {
+        nisabGoldThreshold = 87.45 * goldPrice!; // 7.5 tolas to grams
+        nisabSilverThreshold = 612.15 * silverPrice!; // 52.5 tolas to grams
+      } else if (unitLower == 'kg') {
+        nisabGoldThreshold = 0.08747859375 * goldPrice!; // Convert to kg
+        nisabSilverThreshold = 0.61235015625 * silverPrice!; // Convert to kg
+      } else {
+        return "Invalid unit for zakat calculation."; // Handle invalid unit case
+      }
+
+      // Debugging output
+      debugPrint("Gold Price: $goldPrice");
+      debugPrint("Silver Price: $silverPrice");
+      debugPrint("Total Assets: $returnValue");
+      debugPrint("Nisab Gold Threshold: $nisabGoldThreshold");
+      debugPrint("Nisab Silver Threshold: $nisabSilverThreshold");
+
+      if (returnValue < nisabSilverThreshold && returnValue < nisabGoldThreshold) {
+        return "You are not eligible for zakat.";
+      } else {
+        double zakatAmount = returnValue * 0.025;
+
+        // Debugging output for zakat amount
+        debugPrint("Zakat Amount: $zakatAmount");
+
+        String unitofcurrency = currency;
+
+        // Save calculation to history
+        ZakatHistory newHistory = ZakatHistory(
+          date: DateTime.now(),
+          zakatAmount: zakatAmount,
+          totalAssets: returnValue,
+          currency: unitofcurrency,
+        );
+
+        await saveZakatHistory(newHistory);  // Save history to SharedPreferences
+
+
+        return "You are eligible for zakat. \nTotal Zakat: $zakatAmount $currency"; // Return with currency
+      }
+    } catch (e) {
+      debugPrint('Error calculating zakat: $e');
+      return "An error occurred while calculating zakat.";
+    }
+  }
+}

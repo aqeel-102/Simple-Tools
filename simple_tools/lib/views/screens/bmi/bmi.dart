@@ -15,127 +15,75 @@ class Startup extends StatefulWidget {
 }
 
 class _StartupState extends State<Startup> {
-  final heightNotifier = ValueNotifier<double>(AppConstants.height);
-  final weightNotifier = ValueNotifier<double>(AppConstants.weight.toDouble());
-  final ageNotifier = ValueNotifier<double>(AppConstants.age.toDouble());
+  final _heightNotifier = ValueNotifier<double>(AppConstants.height);
+  final _weightNotifier = ValueNotifier<double>(AppConstants.weight.toDouble());
+  final _ageNotifier = ValueNotifier<double>(AppConstants.age.toDouble());
 
-  Color maleColor = AppConstants.mainColor;
-  Color femaleColor = AppConstants.mainColor;
+  Color _maleColor = AppConstants.mainColor;
+  Color _femaleColor = AppConstants.mainColor;
 
-  Timer? _weightIncrementTimer;
-  Timer? _weightDecrementTimer;
-  Timer? _ageIncrementTimer;
-  Timer? _ageDecrementTimer;
+  Timer? _weightTimer;
+  Timer? _ageTimer;
 
-  void colorChanger(int gender) {
+  void _toggleGender(int gender) {
     setState(() {
       if (gender == 1) {
-        maleColor = maleColor == AppConstants.secColor
+        _maleColor = _maleColor == AppConstants.secColor
             ? AppConstants.mainColor
             : AppConstants.secColor;
-        femaleColor = AppConstants.mainColor;
+        _femaleColor = AppConstants.mainColor;
       } else {
-        femaleColor = femaleColor == AppConstants.secColor
+        _femaleColor = _femaleColor == AppConstants.secColor
             ? AppConstants.mainColor
             : AppConstants.secColor;
-        maleColor = AppConstants.mainColor;
+        _maleColor = AppConstants.mainColor;
       }
     });
   }
 
-  void _startWeightIncrementing() {
-    _weightIncrementTimer =
-        Timer.periodic(const Duration(milliseconds: 100), (timer) {
-          setState(() {
-            if (AppConstants.weight < 300) {
-              AppConstants.weight++;
-              weightNotifier.value = AppConstants.weight.toDouble();
-              AppConstants.weightController.text = AppConstants.weight.toString();
-            } else {
-              timer.cancel();
-            }
-          });
-        });
+  void _startTimer(
+      ValueNotifier<double> notifier, bool increment, double min, double max) {
+    _stopTimer();
+    _weightTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      setState(() {
+        double newValue = increment ? notifier.value + 1 : notifier.value - 1;
+        if (newValue >= min && newValue <= max) {
+          notifier.value = newValue;
+          _updateController(notifier);
+        } else {
+          timer.cancel();
+        }
+      });
+    });
   }
 
-  void _stopWeightIncrementing() {
-    _weightIncrementTimer?.cancel();
+  void _stopTimer() {
+    _weightTimer?.cancel();
+    _ageTimer?.cancel();
   }
 
-  void _startWeightDecrementing() {
-    _weightDecrementTimer =
-        Timer.periodic(const Duration(milliseconds: 100), (timer) {
-          setState(() {
-            if (AppConstants.weight > 0) {
-              AppConstants.weight--;
-              weightNotifier.value = AppConstants.weight.toDouble();
-              AppConstants.weightController.text = AppConstants.weight.toString();
-            } else {
-              timer.cancel();
-            }
-          });
-        });
-  }
-
-  void _stopWeightDecrementing() {
-    _weightDecrementTimer?.cancel();
-  }
-
-  void _startAgeIncrementing() {
-    _ageIncrementTimer =
-        Timer.periodic(const Duration(milliseconds: 100), (timer) {
-          setState(() {
-            if (AppConstants.age < 100) {
-              AppConstants.age++;
-              ageNotifier.value = AppConstants.age.toDouble();
-              AppConstants.ageController.text = AppConstants.age.toString();
-            } else {
-              timer.cancel();
-            }
-          });
-        });
-  }
-
-  void _stopAgeIncrementing() {
-    _ageIncrementTimer?.cancel();
-  }
-
-  void _startAgeDecrementing() {
-    _ageDecrementTimer =
-        Timer.periodic(const Duration(milliseconds: 100), (timer) {
-          setState(() {
-            if (AppConstants.age > 0) {
-              AppConstants.age--;
-              ageNotifier.value = AppConstants.age.toDouble();
-              AppConstants.ageController.text = AppConstants.age.toString();
-            } else {
-              timer.cancel();
-            }
-          });
-        });
-  }
-
-  void _stopAgeDecrementing() {
-    _ageDecrementTimer?.cancel();
+  void _updateController(ValueNotifier<double> notifier) {
+    if (notifier == _weightNotifier) {
+      AppConstants.weightController.text = notifier.value.toStringAsFixed(0);
+    } else if (notifier == _ageNotifier) {
+      AppConstants.ageController.text = notifier.value.toStringAsFixed(0);
+    }
   }
 
   @override
   void initState() {
+    super.initState();
     AppConstants.heightController.text =
         AppConstants.defaultHeight.toStringAsFixed(0);
     AppConstants.ageController.text =
         AppConstants.defaultAge.toStringAsFixed(0);
     AppConstants.weightController.text =
         AppConstants.defaultWeight.toStringAsFixed(0);
-    super.initState();
   }
 
   @override
   void dispose() {
-    _weightIncrementTimer?.cancel();
-    _weightDecrementTimer?.cancel();
-    _ageIncrementTimer?.cancel();
-    _ageDecrementTimer?.cancel();
+    _stopTimer();
     super.dispose();
   }
 
@@ -143,372 +91,221 @@ class _StartupState extends State<Startup> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Center(child: Text("BodyMassCalculator")),
+        title: const Center(child: Text("Body Mass Calculator")),
         backgroundColor: const Color(0xFF448AFF),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(40.0),
-        child: Column(
-          children: [
-            // Gender selection
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => colorChanger(1),
-                      child: CustomContainer(
-                        colors: maleColor,
-                        cardchild: const Containcard(
-                            icon: FontAwesomeIcons.mars, txt: "Male"),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8.0),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => colorChanger(2),
-                      child: CustomContainer(
-                        colors: femaleColor,
-                        cardchild: const Containcard(
-                            icon: FontAwesomeIcons.venus, txt: "Female"),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16.0),
-
-            // Height
-            Expanded(
-              child: CustomContainer(
-                colors: AppConstants.mainColor,
-                cardchild: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.2,
+                child: Row(
                   children: [
-                    const Text(
-                      "Height",
-                      style: TextStyle(
-                        color: Colors.white60,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        SizedBox(
-                          width: 100,
-                          child: TextFormField(
-                            textAlign: TextAlign.center,
-                            cursorHeight: 20,
-                            controller: AppConstants.heightController,
-                            decoration: const InputDecoration(
-                              border: InputBorder.none ,
-                            ),
-                            keyboardType: TextInputType.number,
-                            inputFormatters: <TextInputFormatter>[
-                              FilteringTextInputFormatter.digitsOnly
-                            ],
-                            style: const TextStyle(
-                              color: Colors.white60,
-                              fontSize: 40,
-                              fontWeight: FontWeight.w900,
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a number';
-                              }
-                              int? number = int.tryParse(value);
-                              if (number == null || number < 150 ||
-                                  number > 300) {
-                                return 'Please enter a number between 150 and 300';
-                              }
-                              return null; // Input is valid
-
-                            },
-                            onChanged: (value) {
-                              double? height = double.tryParse(value);
-                              if (height != null && height >= 150 && height <= 300) {
-                                heightNotifier.value = height;
-                                AppConstants.height = height;
-                              }
-                            },
-                          ),
-                        ),
-                        const Text(
-                          "CM",
-                          style: TextStyle(fontSize: 15),
-                        ),
-                      ],
-                    ),
-                    Slider(
-                      value: heightNotifier.value,
-                      min: AppConstants.minHeight.toDouble(),
-                      max: AppConstants.maxHeight.toDouble(),
-                      activeColor: const Color.fromARGB(255, 184, 173, 143),
-                      onChanged: (double newValue) {
-                        setState(() {
-                          heightNotifier.value = newValue;
-                          AppConstants.height = newValue.round() as double;
-                          AppConstants.heightController.text =
-                              newValue.round().toString();
-                        });
-                      },
-                    ),
+                    _buildGenderSelector(
+                        1, "Male", FontAwesomeIcons.mars, _maleColor),
+                    const SizedBox(width: 10),
+                    _buildGenderSelector(
+                        2, "Female", FontAwesomeIcons.venus, _femaleColor),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 16.0),
-
-            // Weight and Age
-            Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: CustomContainer(
-                          colors: AppConstants.mainColor,
-                          cardchild: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const Text(
-                                "Weight",
-                                style: TextStyle(
-                                  color: Colors.white60,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 100,
-                                    child: TextFormField(
-                                        textAlign: TextAlign.center,
-
-                                        controller: AppConstants.weightController,
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                        ),
-                                        keyboardType: TextInputType.number,
-                                        inputFormatters: <TextInputFormatter>[
-                                          FilteringTextInputFormatter.digitsOnly
-                                        ],
-                                        style: const TextStyle(
-                                          color: Colors.white60,
-                                          fontSize: 50,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter your weight';
-                                        }
-                                        return null;
-                                      },
-                                      onChanged: (newValue) {
-                                        setState(() {
-                                          double? weight =
-                                          double.tryParse(newValue);
-                                          if (weight != null && weight>30 || weight!<250) {
-                                            weightNotifier.value = weight;
-                                            AppConstants.weight = weight.round();
-                                          }
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const Text(
-                                    "KG",
-                                    style: TextStyle(fontSize: 15),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  GestureDetector(
-                                    onLongPressStart: (_) =>
-                                        _startWeightDecrementing(),
-                                    onLongPressEnd: (_) =>
-                                        _stopWeightDecrementing(),
-                                    child: RoundButton(
-                                      icon: FontAwesomeIcons.minus,
-                                      onpressed: () {
-                                        setState(() {
-                                          AppConstants.weight--;
-                                          weightNotifier.value =
-                                              AppConstants.weight.toDouble();
-                                          AppConstants.weightController.text =
-                                              AppConstants.weight.toString();
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 15),
-                                  GestureDetector(
-                                    onLongPressStart: (_) =>
-                                        _startWeightIncrementing(),
-                                    onLongPressEnd: (_) =>
-                                        _stopWeightIncrementing(),
-                                    child: RoundButton(
-                                      icon: FontAwesomeIcons.plus,
-                                      onpressed: () {
-                                        setState(() {
-                                          AppConstants.weight++;
-                                          weightNotifier.value =
-                                              AppConstants.weight.toDouble();
-                                          AppConstants.weightController.text =
-                                              AppConstants.weight.toString();
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.25,
+                child: _buildHeightSelector(),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.25,
+                child: Row(
+                  children: [
+                    _buildWeightSelector(),
+                    const SizedBox(width: 10),
+                    _buildAgeSelector(),
+                  ],
                 ),
-                Expanded(
-                  child: CustomContainer(
-                    colors: AppConstants.mainColor,
-                    cardchild: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "Age",
-                            style: TextStyle(
-                              color: Colors.white60,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 100,
-                                child: TextFormField(
-                                  textAlign: TextAlign.center,
-                                  controller: AppConstants.ageController,
-                                  decoration: const InputDecoration(
-                                    border: InputBorder.none,
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  inputFormatters: <TextInputFormatter>[
-                                    FilteringTextInputFormatter.digitsOnly
-                                  ],
-                                  style: const TextStyle(
-                                    color: Colors.white60,
-                                    fontSize: 50,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Please enter a number';
-                                    }
-                                    int? number = int.tryParse(value);
-                                    if (number == null || number < 1 ||
-                                        number > 150) {
-                                      return 'Please enter a number between 1 and 150';
-                                    }
-                                    return null;
-
-                                  },
-                                  onChanged: (newValue) {
-                                    double? age = double.tryParse(newValue);
-                                    if (age != null && age > 1 && age < 150) {
-                                      ageNotifier.value = age;
-                                      AppConstants.age = age.round();
-                                    }
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              GestureDetector(
-                                onLongPressStart: (_) =>
-                                    _startAgeDecrementing(),
-                                onLongPressEnd: (_) => _stopAgeDecrementing(),
-                                child: RoundButton(
-                                  icon: FontAwesomeIcons.minus,
-                                  onpressed: () {
-                                    setState(() {
-                                      AppConstants.age--;
-                                      ageNotifier.value =
-                                          AppConstants.age.toDouble();
-                                      AppConstants.ageController.text =
-                                          AppConstants.age.toString();
-                                    });
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 15),
-                              GestureDetector(
-                                onLongPressStart: (_) =>
-                                    _startAgeIncrementing(),
-                                onLongPressEnd: (_) => _stopAgeIncrementing(),
-                                child: RoundButton(
-                                  icon: FontAwesomeIcons.plus,
-                                  onpressed: () {
-                                    setState(() {
-                                      AppConstants.age++;
-                                      ageNotifier.value =
-                                          AppConstants.age.toDouble();
-                                      AppConstants.ageController.text =
-                                          AppConstants.age.toString();
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16.0),
-
-            // Calculate button
-            BottomButton(
-              value: 'Calculate',
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (BuildContext context) {
-                    return const Result();
-                  },
-                );
-              },
-            ),
-          ],
+              ),
+              const SizedBox(height: 20),
+              BottomButton(
+                value: 'Calculate',
+                onPressed: () => _showResult(context),
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildGenderSelector(
+      int gender, String label, IconData icon, Color color) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _toggleGender(gender),
+        child: CustomContainer(
+          colors: color,
+          cardchild: Containcard(icon: icon, txt: label),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeightSelector() {
+    return CustomContainer(
+      colors: AppConstants.mainColor,
+      cardchild: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text("Height",
+              style: TextStyle(color: Colors.white60, fontSize: 15)),
+          ValueListenableBuilder<double>(
+            valueListenable: _heightNotifier,
+            builder: (context, height, child) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  SizedBox(
+                    width: 100,
+                    child: TextFormField(
+                      textAlign: TextAlign.center,
+                      controller: AppConstants.bmrheightController,
+                      decoration:
+                          const InputDecoration(border: InputBorder.none),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 50,
+                          fontWeight: FontWeight.w900),
+                      onChanged: (value) {
+                        double? newHeight = double.tryParse(value);
+                        if (newHeight != null &&
+                            newHeight >= AppConstants.minHeight &&
+                            newHeight <= AppConstants.maxHeight) {
+                          _heightNotifier.value = newHeight;
+                          AppConstants.height = newHeight;
+                        }
+                      },
+                    ),
+                  ),
+                  const Text("CM"),
+                ],
+              );
+            },
+          ),
+          Slider(
+            value: _heightNotifier.value,
+            min: AppConstants.minHeight.toDouble(),
+            max: AppConstants.maxHeight.toDouble(),
+            activeColor: const Color.fromARGB(255, 184, 173, 143),
+            onChanged: (double newValue) {
+              setState(() {
+                _heightNotifier.value = newValue;
+                AppConstants.height = newValue.round().toDouble();
+                AppConstants.bmrheightController.text =
+                    newValue.round().toString();
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeightSelector() {
+    return Expanded(
+      child: CustomContainer(
+        colors: AppConstants.mainColor,
+        cardchild: _buildNumberSelector(
+            "Weight", _weightNotifier, AppConstants.weightController, "KG"),
+      ),
+    );
+  }
+
+  Widget _buildAgeSelector() {
+    return Expanded(
+      child: CustomContainer(
+        colors: AppConstants.mainColor,
+        cardchild: _buildNumberSelector(
+            "Age", _ageNotifier, AppConstants.ageController, ""),
+      ),
+    );
+  }
+
+  Widget _buildNumberSelector(String label, ValueNotifier<double> notifier,
+      TextEditingController controller, String unit) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(label,
+            style: const TextStyle(color: Colors.white60, fontSize: 15)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 100,
+              child: TextFormField(
+                textAlign: TextAlign.center,
+                controller: controller,
+                decoration: const InputDecoration(border: InputBorder.none),
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: const TextStyle(
+                    color: Colors.white60,
+                    fontSize: 50,
+                    fontWeight: FontWeight.w900),
+                onChanged: (newValue) {
+                  double? value = double.tryParse(newValue);
+                  if (value != null) {
+                    notifier.value = value;
+                    if (label == "Weight") {
+                      AppConstants.weight = value.round();
+                    } else if (label == "Age") {
+                      AppConstants.age = value.round();
+                    }
+                  }
+                },
+              ),
+            ),
+            Text(unit, style: const TextStyle(fontSize: 15)),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildIncrementButton(FontAwesomeIcons.minus,
+                () => _startTimer(notifier, false, 0, 300)),
+            const SizedBox(width: 15),
+            _buildIncrementButton(FontAwesomeIcons.plus,
+                () => _startTimer(notifier, true, 0, 300)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIncrementButton(IconData icon, VoidCallback onPressed) {
+    return GestureDetector(
+      onLongPress: onPressed,
+      onLongPressEnd: (_) => _stopTimer(),
+      child: RoundButton(
+        icon: icon,
+        onpressed: onPressed,
+      ),
+    );
+  }
+
+  void _showResult(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return const Result();
+      },
     );
   }
 }

@@ -1,11 +1,14 @@
+import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 
 class SoundDetailScreen extends StatefulWidget {
   final String title;
   final String sound;
 
-  const SoundDetailScreen({super.key,
+  const SoundDetailScreen({
+    super.key,
     required this.title,
     required this.sound,
   });
@@ -15,15 +18,18 @@ class SoundDetailScreen extends StatefulWidget {
 }
 
 class SoundDetailScreenState extends State<SoundDetailScreen> {
+  final CountDownController _controller = CountDownController();
+  final TextEditingController _durationController = TextEditingController();
   late AudioPlayer _audioPlayer;
   bool _isPlaying = false;
   bool _isPaused = false;
+  int _durationInSeconds = 0; // Store duration in seconds
 
   @override
   void initState() {
     super.initState();
     _audioPlayer = AudioPlayer();
-    _audioPlayer.setReleaseMode(ReleaseMode.loop);  // Set the release mode to loop
+    _audioPlayer.setReleaseMode(ReleaseMode.loop); // Loop the audio
 
     _audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
       if (state == PlayerState.stopped) {
@@ -37,36 +43,54 @@ class SoundDetailScreenState extends State<SoundDetailScreen> {
 
   @override
   void dispose() {
-    super.dispose();
     _audioPlayer.dispose();
+    super.dispose();
   }
 
-  // Play audio logic
   void _playAudio() {
-    if (_isPaused) {
-      _audioPlayer.resume();
-    } else {
-      _audioPlayer.play(AssetSource(widget.sound));
-    }
-
     setState(() {
-      _isPlaying = true;
-      _isPaused = false;
+      _durationInSeconds = (int.tryParse(_durationController.text) ?? 0) * 60;
     });
+
+    if (_durationInSeconds > 0) {
+      if (_isPaused) {
+        _audioPlayer.resume();
+        _controller.resume();
+      } else {
+        _audioPlayer.play(AssetSource(widget.sound));
+        _controller.restart(duration: _durationInSeconds);
+        _controller.start();
+      }
+
+      setState(() {
+        _isPlaying = true;
+        _isPaused = false;
+      });
+
+
+
+      Future.delayed(Duration(seconds: _durationInSeconds), () {
+        _stopAudio();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Audio stopped after duration.')),
+        );
+      });
+    }
   }
 
-  // Pause audio logic
   void _pauseAudio() {
     _audioPlayer.pause();
+    _controller.pause();
     setState(() {
       _isPlaying = false;
       _isPaused = true;
     });
   }
 
-  // Stop audio logic
   void _stopAudio() {
     _audioPlayer.stop();
+    _controller.reset(); // Reset the countdown timer
     setState(() {
       _isPlaying = false;
       _isPaused = false;
@@ -80,7 +104,7 @@ class SoundDetailScreenState extends State<SoundDetailScreen> {
         backgroundColor: Colors.blueGrey[900],
         title: Text(
           widget.title,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -89,14 +113,7 @@ class SoundDetailScreenState extends State<SoundDetailScreen> {
         elevation: 10,
         shadowColor: Colors.black.withOpacity(0.5),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blueGrey[800]!, Colors.blueGrey[600]!],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      body: SingleChildScrollView(
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -106,40 +123,90 @@ class SoundDetailScreenState extends State<SoundDetailScreen> {
               children: [
                 Text(
                   widget.title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                     shadows: [
                       Shadow(
                         blurRadius: 10,
-                        color: Colors.black.withOpacity(0.4),
+                        color: Colors.black38,
                         offset: Offset(2, 2),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
-
-                // Audio Control Buttons
+                const SizedBox(height: 20),
+                Text('Timer'),
+                SizedBox(
+                  width: 110,
+                  child: TextField(
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly, // Allows only digits
+                    ],
+                    controller: _durationController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 2,
+                    textAlign: TextAlign.center, // Center align text for a cleaner look
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.timer),
+                      suffixText: 'min ',
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12), // Reduce padding
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0), // More rounded border
+                        borderSide: BorderSide.none, // Remove border outline for a minimal look
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0),
+                        borderSide: const BorderSide(color: Colors.grey, width: 1), // Subtle border
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0),
+                        borderSide: const BorderSide(color: Colors.blueAccent, width: 2), // Highlighted border
+                      ),
+                    ),
+                    style: const TextStyle(
+                      fontSize: 15, // Slightly larger font for readability
+                    ),
+                  ),
+                ),
+                CircularCountDownTimer(
+                  duration: _durationInSeconds,
+                  initialDuration: 0,
+                  controller: _controller,
+                  width: MediaQuery.of(context).size.width / 2,
+                  height: MediaQuery.of(context).size.height / 2,
+                  ringColor: Colors.grey[300]!,
+                  fillColor: Colors.blueAccent,
+                  backgroundColor: Colors.blue[600],
+                  strokeWidth: 20.0,
+                  strokeCap: StrokeCap.round,
+                  textStyle: const TextStyle(
+                    fontSize: 33.0,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textFormat: CountdownTextFormat.HH_MM_SS,
+                  isReverse: true,
+                  isTimerTextShown: true,
+                  autoStart: false,
+                ),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Play/Resume button
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: _isPlaying
-                            ? null  // Disable if audio is playing
-                            : () {
-                          _playAudio();
-                        },
+                        onPressed: _isPlaying ? null : _playAudio,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
-                          padding: EdgeInsets.symmetric(vertical: 15),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          shadowColor: Colors.black.withOpacity(0.2),
+                          shadowColor: Colors.black26,
                           elevation: 12,
                         ),
                         icon: Icon(
@@ -149,7 +216,7 @@ class SoundDetailScreenState extends State<SoundDetailScreen> {
                         ),
                         label: Text(
                           _isPaused ? "Resume" : "Play",
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -157,31 +224,25 @@ class SoundDetailScreenState extends State<SoundDetailScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 10),
-
-                    // Pause button
+                    const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: _isPlaying
-                            ? () {
-                          _pauseAudio();
-                        }
-                            : null,
+                        onPressed: _isPlaying ? _pauseAudio : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orangeAccent,
-                          padding: EdgeInsets.symmetric(vertical: 15),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          shadowColor: Colors.black.withOpacity(0.2),
+                          shadowColor: Colors.black26,
                           elevation: 12,
                         ),
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.pause_circle_filled,
                           color: Colors.white,
                           size: 24,
                         ),
-                        label: Text(
+                        label: const Text(
                           'Pause',
                           style: TextStyle(
                             fontSize: 18,
@@ -191,30 +252,26 @@ class SoundDetailScreenState extends State<SoundDetailScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 10),
-
-                    // Stop button
+                    const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          _stopAudio();
-                        },
+                        onPressed: _stopAudio,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent,
-                          padding: EdgeInsets.symmetric(vertical: 15),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          shadowColor: Colors.black.withOpacity(0.2),
+                          shadowColor: Colors.black26,
                           elevation: 12,
                         ),
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.stop_circle,
                           color: Colors.white,
                           size: 24,
                         ),
-                        label: Text(
-                          'Stop',
+                        label: const Text(
+                          'Restart',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
