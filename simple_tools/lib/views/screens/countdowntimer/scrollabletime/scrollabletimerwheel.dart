@@ -32,7 +32,8 @@ class _ScrollableTimeWheelState extends State<ScrollableTimeWheel> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(widget.label, style: const TextStyle(color: Colors.white)),
+        Text(widget.label,
+            style: const TextStyle(color: Color.fromARGB(255, 23, 23, 23))),
         const SizedBox(height: 20),
         SizedBox(
           height: 100,
@@ -53,9 +54,12 @@ class _ScrollableTimeWheelState extends State<ScrollableTimeWheel> {
                   child: Text(
                     index.toString(),
                     style: TextStyle(
-                      color: isSelected ? Color(0xffdcd8d7) : Colors.white,
+                      color: isSelected
+                          ? Color.fromARGB(255, 33, 32, 32)
+                          : Colors.black54,
                       fontSize: isSelected ? 30 : 24,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 );

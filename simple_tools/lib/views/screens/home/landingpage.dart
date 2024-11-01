@@ -18,11 +18,13 @@ import 'package:simple_tools/views/screens/home/home.dart';
 import 'package:simple_tools/views/screens/home/settingpage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_tools/views/screens/kiblafinder/kabbacompassmain.dart';
-import 'package:simple_tools/views/screens/passwordmanager/passwordmanagerhomepage.dart';
-import 'package:simple_tools/views/screens/phoneusage/phoneusagehomepage.dart';
+import 'package:simple_tools/views/screens/passwordmanager/landingforpasswordmanager';
+import 'package:simple_tools/views/screens/phoneusageapp/usagehomescreen';
 import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome';
 import 'package:simple_tools/views/screens/qrgenerator/qrcodegenerator.dart';
 import 'package:simple_tools/views/screens/simpackage/prepaid_recharge_calculator.dart';
+import 'package:simple_tools/views/screens/sleeptimerecord/sleeptimehomepage.dart';
+import 'package:simple_tools/views/screens/sleepytimetrack/screentimetrackhomescreen.dart';
 import 'package:simple_tools/views/screens/studytimer/studytimerhomescreen';
 import 'package:simple_tools/views/screens/timeconverter/timeconverterhome.dart';
 import 'package:simple_tools/views/screens/zakatcalculator/zakathome.dart';
@@ -101,7 +103,7 @@ class _LandingPageState extends State<LandingPage> {
       case AppConstants.whiteNoiseGenerator:
         return WhiteNoiseGenerator();
       case AppConstants.passwordManager:
-        return PasswordManagerHomePage();
+        return LandingForPasswordManager();
       case AppConstants.chessClock:
         return ChessHome();
       case AppConstants.qrCodeGenerator:
@@ -115,7 +117,7 @@ class _LandingPageState extends State<LandingPage> {
       case AppConstants.timeConverter:
         return TimeConverterHome();
       case AppConstants.deviceUsage:
-        return PhoneUsageHomePage();
+        return SleepTimeHomePage();
       default:
         return const SizedBox(); // Fallback widget
     }

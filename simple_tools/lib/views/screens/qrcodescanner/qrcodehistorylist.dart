@@ -13,46 +13,46 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class HistoryScreenState extends State<HistoryScreen> {
-  List<String> barcodeHistory = [];
+  List<String> qrCodeHistory = [];
 
   @override
   void initState() {
     super.initState();
-    _loadBarcodeHistory();
+    _loadQRCodeHistory();
   }
 
-  Future<void> _loadBarcodeHistory() async {
+  Future<void> _loadQRCodeHistory() async {
     final prefs = await SharedPreferences.getInstance();
-    final historyJson = prefs.getString('barcode_history');
+    final historyJson = prefs.getString('qrcode_history');
     if (historyJson != null) {
       setState(() {
-        barcodeHistory = List<String>.from(json.decode(historyJson));
+        qrCodeHistory = List<String>.from(json.decode(historyJson));
       });
     }
   }
 
-  Future<void> _saveBarcodeHistory() async {
+  Future<void> _saveQRCodeHistory() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('barcode_history', json.encode(barcodeHistory));
+    await prefs.setString('qrcode_history', json.encode(qrCodeHistory));
   }
 
-  void _deleteBarcode(int index) {
+  void _deleteQRCode(int index) {
     setState(() {
-      barcodeHistory.removeAt(index);
+      qrCodeHistory.removeAt(index);
     });
-    _saveBarcodeHistory();
+    _saveQRCodeHistory();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Barcode History"),
+        title: const Text("QR Code History"),
       ),
       body: ListView.builder(
-        itemCount: barcodeHistory.length,
+        itemCount: qrCodeHistory.length,
         itemBuilder: (context, index) {
-          final code = barcodeHistory[index];
+          final code = qrCodeHistory[index];
           return ListTile(
             leading: SizedBox(
               width: 50,
@@ -80,7 +80,7 @@ class HistoryScreenState extends State<HistoryScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete),
-                  onPressed: () => _deleteBarcode(index),
+                  onPressed: () => _deleteQRCode(index),
                 ),
               ],
             ),

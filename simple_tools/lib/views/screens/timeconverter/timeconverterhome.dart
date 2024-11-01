@@ -295,7 +295,7 @@ class _TimeConverterHomeState extends State<TimeConverterHome> {
                       title: Text(
                           '${_getTimezoneAbbr(timezone)} - ${timezone.split('/').last.replaceAll('_', ' ')}'),
                       subtitle:
-                          Text('${timezone}\n${_getFormattedOffset(timezone)}'),
+                          Text('$timezone\n${_getFormattedOffset(timezone)}'),
                       trailing: Text(
                         DateFormat(is24HourFormat ? 'HH:mm' : 'hh:mm a')
                             .format(now),

@@ -1,24 +1,27 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simple_tools/views/screens/passwordmanager/landingforpasswordmanager';
 import 'package:simple_tools/views/screens/passwordmanager/password_details.dart';
 import 'package:simple_tools/views/screens/passwordmanager/password_model.dart';
+import 'package:simple_tools/views/screens/passwordmanager/passwordsetup.dart';
 import '../../../util/images.dart';
 import 'browse_collection.dart';
 import 'card_collection.dart';
 import 'card_model.dart';
 import 'carddetails.dart';
 import 'login_collection.dart';
+
 enum InputType {
   user, // For user-related fields
-  card,  // For card-related fields
+  card, // For card-related fields
 }
+
 class PasswordManagerHomePage extends StatefulWidget {
   const PasswordManagerHomePage({super.key});
 
   @override
-  PasswordManagerHomePageState createState() =>
-      PasswordManagerHomePageState();
+  PasswordManagerHomePageState createState() => PasswordManagerHomePageState();
 }
 
 class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
@@ -29,12 +32,13 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
   TextEditingController accountType = TextEditingController();
   final TextEditingController _cardNumberController = TextEditingController();
   final TextEditingController _banknameController = TextEditingController();
-  final TextEditingController _cardHolderNameController = TextEditingController();
+  final TextEditingController _cardHolderNameController =
+      TextEditingController();
   final TextEditingController _expiryDateController = TextEditingController();
   final TextEditingController _cvvController = TextEditingController();
 
   List<Password> accounts = [];
-  List<Cards>cardaccount=[];
+  List<Cards> cardaccount = [];
   List<Password> login = [];
   List<Password> browse = [];
   List<Cards> card = [];
@@ -51,6 +55,47 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
     Images.card,
     Images.defaultval
   ];
+
+  String _detectCardType(String cardNumber) {
+    cardNumber = cardNumber.replaceAll(RegExp(r'\s+\b|\b\s'), '');
+
+    // Visa
+    if (RegExp(r'^4[0-9]{12}(?:[0-9]{3})?$').hasMatch(cardNumber)) {
+      return Images.visa;
+    }
+    // Mastercard
+    else if (RegExp(r'^5[1-5][0-9]{14}$|^2[2-7][0-9]{14}$')
+        .hasMatch(cardNumber)) {
+      return Images.mastercard;
+    }
+    // American Express
+    else if (RegExp(r'^3[47][0-9]{13}$').hasMatch(cardNumber)) {
+      return Images.amex;
+    }
+    // Discover
+    else if (RegExp(r'^6(?:011|5[0-9]{2})[0-9]{12}$').hasMatch(cardNumber)) {
+      return Images.discover;
+    }
+    // JCB
+    else if (RegExp(r'^(?:2131|1800|35\d{3})\d{11}$').hasMatch(cardNumber)) {
+      return Images.jcb;
+    }
+    // Diners Club
+    else if (RegExp(r'^3(?:0[0-5]|[68][0-9])[0-9]{11}$').hasMatch(cardNumber)) {
+      return Images.dinersclub;
+    }
+    // UnionPay
+    else if (RegExp(r'^(62|88)\d{14,17}$').hasMatch(cardNumber)) {
+      return Images.unionpay;
+    }
+    // Maestro
+    else if (RegExp(r'^(5018|5020|5038|6304|6759|6761|6763)[0-9]{8,15}$')
+        .hasMatch(cardNumber)) {
+      return Images.maestro;
+    }
+    // Default card image if no match
+    return Images.card;
+  }
 
   // Function to show the icon picker dialog
   void _showIconPicker() async {
@@ -76,8 +121,8 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
                           _availableIcons[index]); // Return selected icon path
                     },
                     child: Image.asset(iconPath)
-                  //Image(iconPath, width: 50, height: 50),
-                );
+                    //Image(iconPath, width: 50, height: 50),
+                    );
               },
             ),
           ),
@@ -91,7 +136,6 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
       });
     }
   }
-
 
   @override
   void initState() {
@@ -107,14 +151,16 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
     if (jsonString != null) {
       List<dynamic> jsonResponse = jsonDecode(jsonString);
       setState(() {
-        accounts = jsonResponse.map((account) => Password.fromJson(account))
+        accounts = jsonResponse
+            .map((account) => Password.fromJson(account))
             .toList(); // Assuming Password has fromJson constructor
       });
     }
+
+    // Load cards
     setState(() async {
       cardaccount = await Cards.getCards();
     });
-
   }
 
   void saveValues() {
@@ -150,7 +196,6 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
       passwordController.clear();
       accountType.clear();
 
-
       // Close the bottom sheet after saving
       Navigator.pop(context);
     } else {
@@ -175,7 +220,6 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
         _cardNumberController.text.isNotEmpty &&
         _expiryDateController.text.isNotEmpty &&
         _cvvController.text.isNotEmpty) {
-
       // Create a new Cards object with input values
       Cards newCard = Cards(
         imagePath: _selectedIcon,
@@ -185,7 +229,6 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
         cardCvv: _cvvController.text,
         bankname: _banknameController.text,
       );
-
 
       setState(() {
         cardaccount.add(newCard); // Add to the list of accounts/cards
@@ -227,20 +270,21 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
     }
   }
 
-
   Future<void> savingintosharedprefernce(List<Password> accounts) async {
     SharedPreferences sp = await SharedPreferences.getInstance();
-    String afterjsonencode = jsonEncode(
-        accounts.map((account) => account.toJson())
-            .toList()); // Convert list of Password objects to JSON
+    String afterjsonencode = jsonEncode(accounts
+        .map((account) => account.toJson())
+        .toList()); // Convert list of Password objects to JSON
     await sp.setString('savedlist', afterjsonencode);
   }
 
   Future<void> savingselectedsharedprefernce(List<Password> selected) async {
     SharedPreferences sp1 = await SharedPreferences.getInstance();
 
-    String loginjson = jsonEncode(login.map((login) => login.toJson()).toList());
-    String browsejson = jsonEncode(browse.map((browse) => browse.toJson()).toList());
+    String loginjson =
+        jsonEncode(login.map((login) => login.toJson()).toList());
+    String browsejson =
+        jsonEncode(browse.map((browse) => browse.toJson()).toList());
 
     await sp1.setString('login', loginjson);
     await sp1.setString('browse', browsejson);
@@ -249,15 +293,12 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
   Future<void> savingextraselectedsharedprefernce(List<Cards> selected) async {
     SharedPreferences sp1 = await SharedPreferences.getInstance();
 
-    String cardjson = jsonEncode(selected.map((card) => card.toJson()).toList()); // Use 'selected' instead of 'card'
+    String cardjson = jsonEncode(selected
+        .map((card) => card.toJson())
+        .toList()); // Use 'selected' instead of 'card'
 
     await sp1.setString('card', cardjson);
   }
-
-
-
-
-
 
   @override
   void dispose() {
@@ -274,11 +315,27 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
     // Example password list
 
     return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: const Color.fromARGB(255, 141, 173, 228),
+        title: Text('Password Manager'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => PasswordSetup()),
+              );
+            },
+            icon: Icon(Icons.settings),
+          ),
+        ],
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         shape: CircleBorder(),
         onPressed: () {
-          _showBottomSheet(context , InputType.user);
+          _showBottomSheet(context, InputType.user);
         },
         child: Icon(Icons.add),
       ),
@@ -291,17 +348,59 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              IconButton(onPressed: (){
-                _showBottomSheet(context , InputType.card);
-              },
-                  icon: Icon(Icons.add_card_outlined)),
-              SizedBox(width: 10),
-              Icon(Icons.shield_outlined)
+              IconButton(
+                onPressed: () {
+                  _showBottomSheet(context, InputType.card);
+                },
+                icon: const Icon(Icons.add_card_outlined),
+              ),
+              const SizedBox(width: 10),
+              IconButton(
+                onPressed: () async {
+                  final SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+                  final bool? isPasswordEnabled =
+                      prefs.getBool('password_enabled');
+
+                  if (isPasswordEnabled == true) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Lock App'),
+                          content: const Text('Do you want to lock the app?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const LandingForPasswordManager(),
+                                  ),
+                                );
+                              },
+                              child: const Text('Lock'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                },
+                icon: const Icon(Icons.shield_outlined),
+              ),
             ],
           ),
         ),
       ),
-
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -315,178 +414,207 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
 
                 // Category Section
                 Text('Category',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => LoginCollection()));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => LoginCollection()));
                       },
-                      child: _buildCategoryButton('login', Icons.vpn_key, Colors.blue[100]),
+                      child: _buildCategoryButton(
+                          'login', Icons.vpn_key, Colors.blue[100]),
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => BrowseCollection()));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => BrowseCollection()));
                       },
-                      child: _buildCategoryButton('browse', Icons.web, Colors.green[100]),
+                      child: _buildCategoryButton(
+                          'browse', Icons.web, Colors.green[100]),
                     ),
                     GestureDetector(
                       onTap: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => CardCollection()));
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => CardCollection()));
                       },
-                      child: _buildCategoryButton('card', Icons.credit_card, Colors.pink[100]),
+                      child: _buildCategoryButton(
+                          'card', Icons.credit_card, Colors.pink[100]),
                     ),
                   ],
                 ),
                 SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  // Tab-like Buttons for Selection
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => setState(() => selectedList = 1),
-                          style: TextButton.styleFrom(
-                            backgroundColor: selectedList == 1 ? Colors.grey : Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          ),
-                          child: Text(
-                            'Passwords',
-                            style: TextStyle(
-                              color: selectedList == 1 ? Colors.white : Colors.black54,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => setState(() => selectedList = 2),
-                          style: TextButton.styleFrom(
-                            backgroundColor: selectedList == 2 ? Colors.grey : Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          ),
-                          child: Text(
-                            'Cards',
-                            style: TextStyle(
-                              color: selectedList == 2 ? Colors.white : Colors.black54,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        spreadRadius: 2,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-
-                  // List View Based on Selected Tab
-              AnimatedSwitcher(
-                duration: Duration(milliseconds: 300),
-                child: selectedList == 1
-                      ? Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SizedBox(
-                          height: 350,
-                          child: ListView.separated(
-                            itemCount: accounts.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: 10),
-                            itemBuilder: (context, index) {
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => AccountDetailScreen(
-                                        account: accounts[index],
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: _buildRecentUsedItem(
-                                  'account',
-                                  index,
-                                  accounts[index].accountUsername,
-                                  accounts[index].email,
-                                  accounts[index].imagePath,
+                  child: Column(
+                    children: [
+                      // Tab-like Buttons for Selection
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => setState(() => selectedList = 1),
+                              style: TextButton.styleFrom(
+                                backgroundColor: selectedList == 1
+                                    ? Colors.grey
+                                    : Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                              );
-                            },
-                          ),
-                        ),
-                      )
-                      : Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SizedBox(
-                          height: 350,
-                          child: ListView.separated(
-                            itemCount: cardaccount.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: 10),
-                            itemBuilder: (context, index) {
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CardDetailScreen(
-                                        card: cardaccount[index],
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: _buildRecentUsedItem(
-                                  'card',
-                                  index,
-                                  cardaccount[index].bankname,
-                                  cardaccount[index].cardHolderName,
-                                  cardaccount[index].imagePath,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16.0),
+                              ),
+                              child: Text(
+                                'Passwords',
+                                style: TextStyle(
+                                  color: selectedList == 1
+                                      ? Colors.white
+                                      : Colors.black54,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () => setState(() => selectedList = 2),
+                              style: TextButton.styleFrom(
+                                backgroundColor: selectedList == 2
+                                    ? Colors.grey
+                                    : Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16.0),
+                              ),
+                              child: Text(
+                                'Cards',
+                                style: TextStyle(
+                                  color: selectedList == 2
+                                      ? Colors.white
+                                      : Colors.black54,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-              ),],
-              ),
-            ),
+                      const SizedBox(height: 16),
 
-
+                      // List View Based on Selected Tab
+                      AnimatedSwitcher(
+                        duration: Duration(milliseconds: 300),
+                        child: selectedList == 1
+                            ? Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: SizedBox(
+                                  height: 350,
+                                  child: ListView.separated(
+                                    itemCount: accounts.length,
+                                    separatorBuilder: (context, index) =>
+                                        const SizedBox(height: 10),
+                                    itemBuilder: (context, index) {
+                                      return GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  AccountDetailScreen(
+                                                account: accounts[index],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: _buildRecentUsedItem(
+                                          'account',
+                                          index,
+                                          accounts[index].accountUsername,
+                                          accounts[index].email,
+                                          accounts[index].imagePath,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              )
+                            : Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: SizedBox(
+                                  height: 350,
+                                  child: ListView.separated(
+                                    itemCount: cardaccount.length,
+                                    separatorBuilder: (context, index) =>
+                                        const SizedBox(height: 10),
+                                    itemBuilder: (context, index) {
+                                      return GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  CardDetailScreen(
+                                                card: cardaccount[index],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: _buildRecentUsedItem(
+                                          'card',
+                                          index,
+                                          cardaccount[index].bankname,
+                                          cardaccount[index].cardHolderName,
+                                          cardaccount[index].imagePath,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
-
     );
   }
 
   // Widget to build each category button
-  Widget _buildCategoryButton(String label, IconData icon, Color? color , ) {
+  Widget _buildCategoryButton(
+    String label,
+    IconData icon,
+    Color? color,
+  ) {
     return Column(
       children: [
         Container(
@@ -505,11 +633,12 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
   }
 
   // Widget to build recent used item
-  Widget _buildRecentUsedItem(String type,int index, String title, String email, String imagePath) {
+  Widget _buildRecentUsedItem(
+      String type, int index, String title, String email, String imagePath) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: GestureDetector(
-        onLongPress: () => _showPopupMenu(context, index , type),
+        onLongPress: () => _showPopupMenu(context, index, type),
         child: ListTile(
           leading: Image.asset(imagePath, height: 40, width: 40),
           title: Text(
@@ -561,7 +690,11 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-                _iconSelector(),
+                if (inputType == InputType.user) ...[
+                  _iconSelector(),
+                ] else ...[
+                  Image.asset(_selectedIcon, height: 40, width: 40),
+                ],
                 const SizedBox(height: 20),
                 // Input Fields
                 if (inputType == InputType.user) ...[
@@ -571,7 +704,8 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
                 ],
                 const SizedBox(height: 24),
                 // Save Button
-                _mainButton('Save', inputType == InputType.user ? saveValues : saveCardvalues),
+                _mainButton('Save',
+                    inputType == InputType.user ? saveValues : saveCardvalues),
               ],
             ),
           ),
@@ -612,17 +746,20 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
               ),
             ),
             const SizedBox(width: 16),
-            Expanded(child: _enterInput('Username', Icons.perm_identity, usernameController, TextInputType.name, 30)),
+            Expanded(
+                child: _enterInput('Username', Icons.perm_identity,
+                    usernameController, TextInputType.name, 30)),
           ],
         ),
         const SizedBox(height: 16),
-        _enterInput('E-mail', Icons.mail_outline_outlined, emailController, TextInputType.emailAddress, 320),
+        _enterInput('E-mail', Icons.mail_outline_outlined, emailController,
+            TextInputType.emailAddress, 320),
         const SizedBox(height: 16),
-        _enterInput('Password', Icons.lock_outline, passwordController, TextInputType.visiblePassword, 15),
+        _enterInput('Password', Icons.lock_outline, passwordController,
+            TextInputType.visiblePassword, 15),
       ],
     );
   }
-
 
 // Method to build card input fields
   Widget _buildCardInputFields() {
@@ -630,28 +767,50 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
       children: [
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: _enterInput('Bank Name', Icons.account_balance_outlined, _banknameController, TextInputType.name , 30),
+          child: _enterInput('Bank Name', Icons.account_balance_outlined,
+              _banknameController, TextInputType.name, 30),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: _enterInput('Account Name', Icons.perm_identity, _cardHolderNameController, TextInputType.name , 30),
+          child: TextField(
+            controller: _cardNumberController,
+            keyboardType: TextInputType.number,
+            maxLength: 16,
+            onChanged: (value) {
+              setState(() {
+                _selectedIcon = _detectCardType(value);
+              });
+            },
+            decoration: InputDecoration(
+              labelText: 'Card Number',
+              prefixIcon: Icon(Icons.credit_card),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.grey[200],
+            ),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: _enterInput('Card Number', Icons.credit_card, _cardNumberController, TextInputType.number , 16),
+          child: _enterInput('Account Name', Icons.perm_identity,
+              _cardHolderNameController, TextInputType.name, 30),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: _enterInput('Expiry Date', Icons.calendar_month_outlined, _expiryDateController, TextInputType.datetime , 10),
+          child: _enterInput('Expiry Date', Icons.calendar_month_outlined,
+              _expiryDateController, TextInputType.datetime, 10),
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: _enterInput('Cvv', Icons.account_balance_wallet_outlined, _cvvController, TextInputType.number , 3),
+          child: _enterInput('Cvv', Icons.account_balance_wallet_outlined,
+              _cvvController, TextInputType.number, 3),
         ),
       ],
     );
   }
-
 
   Widget _iconSelector() {
     return GestureDetector(
@@ -683,13 +842,14 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
   }
 
   Widget _enterInput(
-      String label,
-      IconData icon,
-      TextEditingController controller,
-      TextInputType keyboardType,
-      int length, {
-        void Function(String)? onChanged, // Change from VoidCallback to Function(String)
-      }) {
+    String label,
+    IconData icon,
+    TextEditingController controller,
+    TextInputType keyboardType,
+    int length, {
+    void Function(String)?
+        onChanged, // Change from VoidCallback to Function(String)
+  }) {
     return TextField(
       keyboardType: keyboardType,
       controller: controller,
@@ -707,6 +867,7 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
       ),
     );
   }
+
   Widget _mainButton(String name, onPressed) {
     return ElevatedButton(
       onPressed: onPressed,
@@ -739,11 +900,8 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
         ),
         PopupMenuItem(
           value: 'album',
-          child: ListTile(leading: Icon(Icons.album), title: Text('Add to Album')),
-        ),
-        PopupMenuItem(
-          value: 'edit',
-          child: ListTile(leading: Icon(Icons.edit), title: Text('Edit')),
+          child:
+              ListTile(leading: Icon(Icons.album), title: Text('Add to Album')),
         ),
       ],
     );
@@ -757,15 +915,14 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
         }
       });
 
-      await savingintosharedprefernce(accounts); // Make sure this function can handle both lists
+      await savingintosharedprefernce(
+          accounts); // Make sure this function can handle both lists
       await Cards.saveCards(cardaccount);
       if (!mounted) return;
-    }
-    else if (result == 'album' ) {
-      _showOptionsDialog(context, index , type);
+    } else if (result == 'album') {
+      _showOptionsDialog(context, index, type);
     }
   }
-
 
   void _showOptionsDialog(BuildContext context, int index, String type) {
     showDialog(
@@ -786,24 +943,32 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          login.add(accounts[index]); // Add to recommended login list
+                          login.add(
+                              accounts[index]); // Add to recommended login list
                         });
-                        savingselectedsharedprefernce(login); // Save recommended login accounts
+                        savingselectedsharedprefernce(
+                            login); // Save recommended login accounts
                         Navigator.pop(context); // Close dialog
-                        _showSnackBar(context, 'Added to Login'); // Show a message
+                        _showSnackBar(
+                            context, 'Added to Login'); // Show a message
                       },
-                      child: _buildCategoryButton('login', Icons.vpn_key, Colors.blue[100]!),
+                      child: _buildCategoryButton(
+                          'login', Icons.vpn_key, Colors.blue[100]!),
                     ),
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          browse.add(accounts[index]); // Add to recommended browse list
+                          browse.add(accounts[
+                              index]); // Add to recommended browse list
                         });
-                        savingselectedsharedprefernce(browse); // Save recommended browse accounts
+                        savingselectedsharedprefernce(
+                            browse); // Save recommended browse accounts
                         Navigator.pop(context); // Close dialog
-                        _showSnackBar(context, 'Added to Browse'); // Show a message
+                        _showSnackBar(
+                            context, 'Added to Browse'); // Show a message
                       },
-                      child: _buildCategoryButton('browse', Icons.web, Colors.green[100]!),
+                      child: _buildCategoryButton(
+                          'browse', Icons.web, Colors.green[100]!),
                     ),
                   ],
 
@@ -812,13 +977,17 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
                     GestureDetector(
                       onTap: () {
                         setState(() {
-                          card.add(cardaccount[index]); // Add to recommended card list
+                          card.add(cardaccount[
+                              index]); // Add to recommended card list
                         });
-                        savingextraselectedsharedprefernce(card); // Save recommended card accounts
+                        savingextraselectedsharedprefernce(
+                            card); // Save recommended card accounts
                         Navigator.pop(context); // Close dialog
-                        _showSnackBar(context, 'Added to Card'); // Show a message
+                        _showSnackBar(
+                            context, 'Added to Card'); // Show a message
                       },
-                      child: _buildCategoryButton('card', Icons.credit_card, Colors.pink[100]!),
+                      child: _buildCategoryButton(
+                          'card', Icons.credit_card, Colors.pink[100]!),
                     ),
                   ],
                 ],
@@ -829,8 +998,6 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
       },
     );
   }
-
-
 
   void _showSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -843,7 +1010,6 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
     );
   }
 
-
   void _updateIcon() {
     String input = accountType.text.toLowerCase(); // Convert to lowercase
     setState(() {
@@ -854,49 +1020,15 @@ class PasswordManagerHomePageState extends State<PasswordManagerHomePage> {
         _selectedIcon = Images.facebook;
       } else if (input.contains('linkedin')) {
         _selectedIcon = Images.linkedin;
-      }
-      else if (input.contains('whatsapp')) {
+      } else if (input.contains('whatsapp')) {
         _selectedIcon = Images.whatsapp;
-      }
-      else if (input.contains('instagram')) {
+      } else if (input.contains('instagram')) {
         _selectedIcon = Images.instagram;
-      }
-      else if (input.contains('netflix')) {
+      } else if (input.contains('netflix')) {
         _selectedIcon = Images.netflix;
-      }
-      else {
+      } else {
         _selectedIcon = Images.defaultval; // Default icon
       }
     });
   }
-
 }
-
- /*void _updateCardIcon() {
-  String input = accountType.text.toLowerCase(); // Convert to lowercase
-  setState(() {
-    // Match the icon based on input text
-    if (input.contains('google')) {
-      _selectedIcon = Images.google;
-    } else if (input.contains('facebook')) {
-      _selectedIcon = Images.facebook;
-    } else if (input.contains('linkedin')) {
-      _selectedIcon = Images.linkedin;
-    }
-    else if (input.contains('whatsapp')) {
-      _selectedIcon = Images.whatsapp;
-    }
-    else if (input.contains('instagram')) {
-      _selectedIcon = Images.instagram;
-    }
-    else if (input.contains('netflix')) {
-      _selectedIcon = Images.netflix;
-    }
-    else {
-      _selectedIcon = Images.defaultval; // Default icon
-    }
-  });
-}*/
-
-
-

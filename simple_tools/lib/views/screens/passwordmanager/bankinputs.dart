@@ -1,33 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
-class Bank {
+class CardType {
   final String name;
   final String logo;
+  final String pattern;
 
-  Bank({required this.name, required this.logo});
-
-  factory Bank.fromJson(Map<String, dynamic> json) {
-    return Bank(
-      name: json['name'],
-      logo: json['logo'],
-    );
-  }
-}
-
-class BankDataProvider {
-  Future<List<Bank>> fetchBanks() async {
-    final response = await http.get(
-        Uri.parse('https://apisandbox.openbankproject.com/obp/v4.0.0/banks'));
-
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((bank) => Bank.fromJson(bank)).toList();
-    } else {
-      throw Exception('Failed to load banks');
-    }
-  }
+  CardType({required this.name, required this.logo, required this.pattern});
 }
 
 class BankInput extends StatefulWidget {
@@ -38,85 +16,76 @@ class BankInput extends StatefulWidget {
 }
 
 class BankInputState extends State<BankInput> {
-  final TextEditingController _bankNameController = TextEditingController();
-  List<Bank> _banks = [];
-  List<Bank> _filteredBanks = [];
-  String? _selectedBankLogo;
+  final TextEditingController _cardNumberController = TextEditingController();
+  String? _selectedCardLogo;
+
+  // List of card types with their regex patterns
+  final List<CardType> cardTypes = [
+    CardType(
+        name: 'Visa',
+        logo: 'assets/images/visa.png',
+        pattern: r'^4[0-9]{12}(?:[0-9]{3})?$'),
+    CardType(
+        name: 'Mastercard',
+        logo: 'assets/images/mastercard.png',
+        pattern: r'^5[1-5][0-9]{14}$'),
+    CardType(
+        name: 'American Express',
+        logo: 'assets/images/amex.png',
+        pattern: r'^3[47][0-9]{13}$'),
+    CardType(
+        name: 'Discover',
+        logo: 'assets/images/discover.png',
+        pattern: r'^6(?:011|5[0-9]{2})[0-9]{12}$'),
+  ];
 
   @override
   void initState() {
     super.initState();
-    fetchBankData();
+    _cardNumberController.addListener(_updateCardLogo);
   }
 
-  Future<void> fetchBankData() async {
-    BankDataProvider bankDataProvider = BankDataProvider();
-    _banks = await bankDataProvider.fetchBanks();
-  }
+  void _updateCardLogo() {
+    String cardNumber =
+        _cardNumberController.text.replaceAll(RegExp(r'\s+\b|\b\s'), '');
 
-  void _filterBanks(String query) {
     setState(() {
-      _filteredBanks = _banks
-          .where(
-              (bank) => bank.name.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      _selectedCardLogo = null;
+      for (var cardType in cardTypes) {
+        if (RegExp(cardType.pattern).hasMatch(cardNumber)) {
+          _selectedCardLogo = cardType.logo;
+          break;
+        }
+      }
     });
-  }
-
-  void _selectBank(Bank bank) {
-    _bankNameController.text = bank.name;
-    _selectedBankLogo = bank.logo;
-    setState(() {
-      _filteredBanks = [];
-    });
-  }
-
-  Widget _buildBankNameAutocomplete() {
-    return Column(
-      children: [
-        TextField(
-          controller: _bankNameController,
-          decoration: InputDecoration(
-            labelText: 'Bank Name',
-            border: OutlineInputBorder(),
-          ),
-          onChanged: _filterBanks,
-        ),
-        if (_filteredBanks.isNotEmpty)
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              itemCount: _filteredBanks.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(_filteredBanks[index].name),
-                  leading: Image.network(_filteredBanks[index].logo),
-                  onTap: () => _selectBank(_filteredBanks[index]),
-                );
-              },
-            ),
-          ),
-      ],
-    );
   }
 
   Widget _buildCardInputFields() {
     return Column(
       children: [
-        if (_selectedBankLogo != null)
+        if (_selectedCardLogo != null)
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Image.network(
-              _selectedBankLogo!,
+            child: Image.asset(
+              _selectedCardLogo!,
               width: 100,
               height: 50,
             ),
           ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: _buildBankNameAutocomplete(),
+          child: TextField(
+            controller: _cardNumberController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Card Number',
+              border: OutlineInputBorder(),
+            ),
+            maxLength: 19,
+          ),
         ),
-        // Other input fields (Account Name, Card Number, Expiry Date, CVV) can be added here
+        // Additional card input fields can be added here
+        // Like card holder name, expiry date, CVV etc.
       ],
     );
   }
@@ -126,5 +95,11 @@ class BankInputState extends State<BankInput> {
     return SingleChildScrollView(
       child: _buildCardInputFields(),
     );
+  }
+
+  @override
+  void dispose() {
+    _cardNumberController.dispose();
+    super.dispose();
   }
 }

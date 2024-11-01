@@ -4,9 +4,11 @@ import 'package:simple_tools/views/screens/barcodescanner/barcodescanner.dart';
 import 'package:simple_tools/views/screens/chessclock/chesshome.dart';
 import 'package:simple_tools/views/screens/deviceinfo/deviceinfohomepage';
 import 'package:simple_tools/views/screens/home/landingpage.dart';
-import 'package:simple_tools/views/screens/phoneusage/phoneusagehomepage.dart';
+import 'package:simple_tools/views/screens/passwordmanager/landingforpasswordmanager';
 import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome';
 import 'package:simple_tools/views/screens/simpackage/prepaid_recharge_calculator.dart';
+import 'package:simple_tools/views/screens/sleeptimerecord/sleeptimehomepage.dart';
+import 'package:simple_tools/views/screens/sleepytimetrack/screentimetrackhomescreen.dart';
 import 'package:simple_tools/views/screens/studytimer/studytimerhomescreen';
 import 'package:simple_tools/views/screens/timeconverter/timeconverterhome.dart';
 import '../../../util/app_constants.dart';
@@ -19,7 +21,6 @@ import '../bmr/bmr.dart';
 import '../compass/compassmain.dart';
 import '../countdowntimer/mainscreenofcountdown.dart';
 import '../kiblafinder/kabbacompassmain.dart';
-import '../passwordmanager/passwordmanagerhomepage.dart';
 import '../qrcodescanner/qrcoderhomescreen.dart';
 import '../qrgenerator/qrcodegenerator.dart';
 import '../zakatcalculator/zakathome.dart';
@@ -117,8 +118,8 @@ class _HomeState extends State<Home> {
                 const SizedBox(height: 20),
                 CustomCard(
                   image: Images.barcode,
-                  title: AppConstants.barCode,
-                  nextScreen: const Barcoder(),
+                  title: AppConstants.qrCode,
+                  nextScreen: const QrCoder(),
                 ),
                 const SizedBox(height: 20),
                 CustomCard(
@@ -148,7 +149,7 @@ class _HomeState extends State<Home> {
                 CustomCard(
                   image: Images.compass,
                   title: AppConstants.passwordManager,
-                  nextScreen: PasswordManagerHomePage(),
+                  nextScreen: LandingForPasswordManager(),
                 ),
                 const SizedBox(height: 20),
                 CustomCard(
@@ -196,7 +197,7 @@ class _HomeState extends State<Home> {
                 CustomCard(
                   image: Images.bmi,
                   title: AppConstants.deviceUsage,
-                  nextScreen: PhoneUsageHomePage(),
+                  nextScreen: SleepTimeHomePage(),
                 ),
               ],
             ),

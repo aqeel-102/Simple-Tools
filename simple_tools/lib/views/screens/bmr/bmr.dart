@@ -5,7 +5,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:simple_tools/views/screens/bmr/result_bmr.dart';
 import '../../../../util/app_constants.dart';
 import '../../custom_widgets/button.dart';
-import '../../custom_widgets/bmi_widgets.dart';
 
 class BMR extends StatefulWidget {
   const BMR({super.key});
@@ -22,93 +21,11 @@ class _BMRState extends State<BMR> {
   Color maleColor = AppConstants.mainColor;
   Color femaleColor = AppConstants.mainColor;
 
-  Timer? _weightIncrementTimer;
-  Timer? _weightDecrementTimer;
-  Timer? _ageIncrementTimer;
-  Timer? _ageDecrementTimer;
+  Timer? _weightTimer;
+  Timer? _ageTimer;
 
-  void _startWeightIncrementing() {
-    _weightIncrementTimer =
-        Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      setState(() {
-        if (AppConstants.weight < 300) {
-          // Change limit as needed
-          AppConstants.weight++;
-          _weightNotifier.value = AppConstants.weight.toDouble();
-          AppConstants.bmrweightController.text =
-              AppConstants.weight.toString();
-        } else {
-          timer.cancel();
-        }
-      });
-    });
-  }
-
-  void _stopWeightIncrementing() {
-    _weightIncrementTimer?.cancel();
-  }
-
-  void _startWeightDecrementing() {
-    _weightDecrementTimer =
-        Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      setState(() {
-        if (AppConstants.weight > 0) {
-          AppConstants.weight--;
-          _weightNotifier.value = AppConstants.weight.toDouble();
-          AppConstants.bmrweightController.text =
-              AppConstants.weight.toString();
-        } else {
-          timer.cancel();
-        }
-      });
-    });
-  }
-
-  void _stopWeightDecrementing() {
-    _weightDecrementTimer?.cancel();
-  }
-
-  void _startAgeIncrementing() {
-    _ageIncrementTimer =
-        Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      setState(() {
-        if (AppConstants.age < 100) {
-          AppConstants.age++;
-          _ageNotifier.value = AppConstants.age.toDouble();
-          AppConstants.bmrageController.text = AppConstants.age.toString();
-        } else {
-          timer.cancel();
-        }
-      });
-    });
-  }
-
-  void _stopAgeIncrementing() {
-    _ageIncrementTimer?.cancel();
-  }
-
-  void _startAgeDecrementing() {
-    _ageDecrementTimer =
-        Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      setState(() {
-        if (AppConstants.age > 0) {
-          AppConstants.age--;
-          _ageNotifier.value = AppConstants.age.toDouble();
-          AppConstants.bmrageController.text = AppConstants.age.toString();
-        } else {
-          timer.cancel();
-        }
-      });
-    });
-  }
-
-  void _stopAgeDecrementing() {
-    _ageDecrementTimer?.cancel();
-  }
-
-  void colorChanger(int gender, String selectedgender) {
+  void _toggleGender(int gender) {
     setState(() {
-      AppConstants.selectedofgender = selectedgender;
       if (gender == 1) {
         maleColor = maleColor == AppConstants.secColor
             ? AppConstants.mainColor
@@ -123,406 +40,402 @@ class _BMRState extends State<BMR> {
     });
   }
 
+  void _startTimer(
+      ValueNotifier<double> notifier, bool increment, double min, double max) {
+    _stopTimer();
+    _weightTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      setState(() {
+        double newValue = increment ? notifier.value + 1 : notifier.value - 1;
+        if (newValue >= min && newValue <= max) {
+          notifier.value = newValue;
+          _updateController(notifier);
+        } else {
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  void _stopTimer() {
+    _weightTimer?.cancel();
+    _ageTimer?.cancel();
+  }
+
+  void _updateController(ValueNotifier<double> notifier) {
+    if (notifier == _weightNotifier) {
+      AppConstants.bmrweightController.text = notifier.value.toStringAsFixed(0);
+    } else if (notifier == _ageNotifier) {
+      AppConstants.bmrageController.text = notifier.value.toStringAsFixed(0);
+    }
+  }
+
+  void _incrementValue(ValueNotifier<double> notifier, bool increment) {
+    double newValue = increment ? notifier.value + 1 : notifier.value - 1;
+    if (newValue >= 0 && newValue <= 300) {
+      setState(() {
+        notifier.value = newValue;
+        _updateController(notifier);
+      });
+    }
+  }
+
   @override
   void initState() {
+    super.initState();
     AppConstants.bmrheightController.text =
         AppConstants.defaultHeight.toStringAsFixed(0);
     AppConstants.bmrageController.text =
         AppConstants.defaultAge.toStringAsFixed(0);
     AppConstants.bmrweightController.text =
         AppConstants.defaultWeight.toStringAsFixed(0);
-    super.initState();
   }
 
   @override
   void dispose() {
-    _weightIncrementTimer?.cancel();
-    _weightDecrementTimer?.cancel();
-    _ageIncrementTimer?.cancel();
-    _ageDecrementTimer?.cancel();
+    _stopTimer();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Center(child: Text("BodyMassCalculator")),
-        backgroundColor: const Color(0xFF448AFF),
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          "BMR Calculator",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
       ),
-      body: SafeArea(
-        child: GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(40.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).scaffoldBackgroundColor,
+              Theme.of(context).primaryColor.withOpacity(0.1),
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.2,
+                  child: Row(
                     children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => colorChanger(1, 'male'),
-                          child: CustomContainer(
-                            colors: maleColor,
-                            cardchild: const Containcard(
-                                icon: FontAwesomeIcons.mars, txt: "Male"),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => colorChanger(2, 'female'),
-                          child: CustomContainer(
-                            colors: femaleColor,
-                            cardchild: const Containcard(
-                                icon: FontAwesomeIcons.venus, txt: "Female"),
-                          ),
-                        ),
-                      ),
+                      _buildGenderSelector(
+                          1, "Male", FontAwesomeIcons.mars, maleColor),
+                      const SizedBox(width: 16),
+                      _buildGenderSelector(
+                          2, "Female", FontAwesomeIcons.venus, femaleColor),
                     ],
                   ),
-                  const SizedBox(height: 16.0),
-                  CustomContainer(
-                    colors: AppConstants.mainColor,
-                    cardchild: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Height",
-                          style: TextStyle(
-                            color: Colors.white60,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        ValueListenableBuilder<double>(
-                          valueListenable: _heightNotifier,
-                          builder: (context, height, child) {
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
-                              children: [
-                                SizedBox(
-                                  width: 100,
-                                  child: TextFormField(
-                                    textAlign: TextAlign.center,
-                                    controller:
-                                        AppConstants.bmrheightController,
-                                    decoration: const InputDecoration(
-                                      border: InputBorder.none,
-                                    ),
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: <TextInputFormatter>[
-                                      FilteringTextInputFormatter.digitsOnly
-                                    ],
-                                    style: const TextStyle(
-                                      color: Colors.white60,
-                                      fontSize: 50,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                    onChanged: (value) {
-                                      double? newHeight =
-                                          double.tryParse(value);
-                                      if (newHeight != null &&
-                                          newHeight >= AppConstants.minHeight &&
-                                          newHeight <= AppConstants.maxHeight) {
-                                        _heightNotifier.value = newHeight;
-                                        AppConstants.height = newHeight;
-                                      }
-                                    },
-                                  ),
-                                ),
-                                const Text("CM"),
-                              ],
-                            );
-                          },
-                        ),
-                        Slider(
-                          value: _heightNotifier.value,
-                          min: AppConstants.minHeight.toDouble(),
-                          max: AppConstants.maxHeight.toDouble(),
-                          activeColor: const Color.fromARGB(255, 184, 173, 143),
-                          onChanged: (double newValue) {
-                            setState(() {
-                              _heightNotifier.value = newValue;
-                              AppConstants.height = newValue.round().toDouble();
-                              AppConstants.bmrheightController.text =
-                                  newValue.round().toString();
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  Row(
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.25,
+                  child: _buildHeightSelector(),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.25,
+                  child: Row(
                     children: [
-                      Expanded(
-                        child: CustomContainer(
-                          colors: AppConstants.mainColor,
-                          cardchild: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  "Weight",
-                                  style: TextStyle(
-                                    color: Colors.white60,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Center(
-                                      child: Expanded(
-                                        child: SizedBox(
-                                          width: 80,
-                                          child: TextFormField(
-                                            textAlign: TextAlign.center,
-                                            controller: AppConstants
-                                                .bmrweightController,
-                                            decoration: const InputDecoration(
-                                              border: InputBorder.none,
-                                            ),
-                                            inputFormatters: <TextInputFormatter>[
-                                              FilteringTextInputFormatter
-                                                  .digitsOnly
-                                            ],
-                                            keyboardType: TextInputType.number,
-                                            style: const TextStyle(
-                                              color: Colors.white60,
-                                              fontSize: 50,
-                                              fontWeight: FontWeight.w900,
-                                            ),
-                                            validator: (value) {
-                                              if (value == null ||
-                                                  value.isEmpty) {
-                                                return 'Please enter your weight';
-                                              }
-                                              return null;
-                                            },
-                                            onChanged: (newValue) {
-                                              setState(() {
-                                                double? weight =
-                                                    double.tryParse(newValue);
-                                                if (weight != null &&
-                                                        weight >= 30 ||
-                                                    weight! <= 250) {
-                                                  _weightNotifier.value =
-                                                      weight;
-                                                  AppConstants.weight =
-                                                      weight.round();
-                                                }
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: const Text(
-                                        "KG",
-                                        style: TextStyle(fontSize: 15),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onLongPressStart: (_) =>
-                                            _startWeightDecrementing(),
-                                        onLongPressEnd: (_) =>
-                                            _stopWeightDecrementing(),
-                                        child: RoundButton(
-                                          icon: FontAwesomeIcons.minus,
-                                          onpressed: () {
-                                            setState(() {
-                                              AppConstants.weight--;
-                                              _weightNotifier.value =
-                                                  AppConstants.weight
-                                                      .toDouble();
-                                              AppConstants.bmrweightController
-                                                      .text =
-                                                  AppConstants.weight
-                                                      .toString();
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 15),
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onLongPressStart: (_) =>
-                                            _startWeightIncrementing(),
-                                        onLongPressEnd: (_) =>
-                                            _stopWeightIncrementing(),
-                                        child: RoundButton(
-                                          icon: FontAwesomeIcons.plus,
-                                          onpressed: () {
-                                            setState(() {
-                                              AppConstants.weight++;
-                                              _weightNotifier.value =
-                                                  AppConstants.weight
-                                                      .toDouble();
-                                              AppConstants.bmrweightController
-                                                      .text =
-                                                  AppConstants.weight
-                                                      .toString();
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        child: CustomContainer(
-                          colors: AppConstants.mainColor,
-                          cardchild: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  "Age",
-                                  style: TextStyle(
-                                    color: Colors.white60,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SizedBox(
-                                      width: 100,
-                                      child: TextFormField(
-                                        textAlign: TextAlign.center,
-                                        controller:
-                                            AppConstants.bmrageController,
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                        ),
-                                        inputFormatters: <TextInputFormatter>[
-                                          FilteringTextInputFormatter.digitsOnly
-                                        ],
-                                        keyboardType: TextInputType.number,
-                                        style: const TextStyle(
-                                          color: Colors.white60,
-                                          fontSize: 50,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                        validator: (value) {
-                                          if (value == null || value.isEmpty) {
-                                            return 'Please enter your age';
-                                          }
-                                          return null;
-                                        },
-                                        onChanged: (newValue) {
-                                          setState(() {
-                                            double? age =
-                                                double.tryParse(newValue);
-                                            if (age != null && age >= 1 ||
-                                                age! <= 150) {
-                                              _ageNotifier.value = age;
-                                              AppConstants.age = age.round();
-                                            }
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onLongPressStart: (_) =>
-                                            _startAgeDecrementing(),
-                                        onLongPressEnd: (_) =>
-                                            _stopAgeDecrementing(),
-                                        child: RoundButton(
-                                          icon: FontAwesomeIcons.minus,
-                                          onpressed: () {
-                                            setState(() {
-                                              AppConstants.age--;
-                                              _ageNotifier.value =
-                                                  AppConstants.age.toDouble();
-                                              AppConstants
-                                                      .bmrageController.text =
-                                                  AppConstants.age.toString();
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 15),
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onLongPressStart: (_) =>
-                                            _startAgeIncrementing(),
-                                        onLongPressEnd: (_) =>
-                                            _stopAgeIncrementing(),
-                                        child: RoundButton(
-                                          icon: FontAwesomeIcons.plus,
-                                          onpressed: () {
-                                            setState(() {
-                                              AppConstants.age++;
-                                              _ageNotifier.value =
-                                                  AppConstants.age.toDouble();
-                                              AppConstants
-                                                      .bmrageController.text =
-                                                  AppConstants.age.toString();
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      _buildWeightSelector(),
+                      const SizedBox(width: 16),
+                      _buildAgeSelector(),
                     ],
                   ),
-                  BottomButton(
-                    value: 'Calculate',
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (context) => BmrResult(),
-                      );
-                    },
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 32),
+                BottomButton(
+                  value: 'Calculate BMR',
+                  onPressed: () => _showResult(context),
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildGenderSelector(
+      int gender, String label, IconData icon, Color color) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _toggleGender(gender),
+        child: Container(
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 2,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 40,
+                color: color,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeightSelector() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppConstants.mainColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppConstants.mainColor.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Height",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          ValueListenableBuilder<double>(
+            valueListenable: _heightNotifier,
+            builder: (context, height, child) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  SizedBox(
+                    width: 100,
+                    child: TextFormField(
+                      textAlign: TextAlign.center,
+                      controller: AppConstants.bmrheightController,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      onChanged: (value) {
+                        double? newHeight = double.tryParse(value);
+                        if (newHeight != null &&
+                            newHeight >= AppConstants.minHeight &&
+                            newHeight <= AppConstants.maxHeight) {
+                          setState(() {
+                            _heightNotifier.value = newHeight;
+                            AppConstants.height = newHeight;
+                            AppConstants.bmrheightController.text = value;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  const Text(
+                    "cm",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: AppConstants.mainColor,
+              inactiveTrackColor: AppConstants.mainColor.withOpacity(0.2),
+              thumbColor: AppConstants.mainColor,
+              overlayColor: AppConstants.mainColor.withOpacity(0.2),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
+            ),
+            child: Slider(
+              value: _heightNotifier.value,
+              min: AppConstants.minHeight.toDouble(),
+              max: AppConstants.maxHeight.toDouble(),
+              onChanged: (double newValue) {
+                setState(() {
+                  _heightNotifier.value = newValue;
+                  AppConstants.height = newValue.round().toDouble();
+                  AppConstants.bmrheightController.text =
+                      newValue.round().toString();
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeightSelector() {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppConstants.mainColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppConstants.mainColor.withOpacity(0.3),
+            width: 2,
+          ),
+        ),
+        child: _buildNumberSelector(
+            "Weight", _weightNotifier, AppConstants.bmrweightController, "kg"),
+      ),
+    );
+  }
+
+  Widget _buildAgeSelector() {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppConstants.mainColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppConstants.mainColor.withOpacity(0.3),
+            width: 2,
+          ),
+        ),
+        child: _buildNumberSelector(
+            "Age", _ageNotifier, AppConstants.bmrageController, ""),
+      ),
+    );
+  }
+
+  Widget _buildNumberSelector(String label, ValueNotifier<double> notifier,
+      TextEditingController controller, String unit) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 80,
+              child: TextFormField(
+                textAlign: TextAlign.center,
+                controller: controller,
+                decoration: const InputDecoration(border: InputBorder.none),
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                style: const TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.w700,
+                ),
+                onChanged: (newValue) {
+                  double? value = double.tryParse(newValue);
+                  if (value != null) {
+                    notifier.value = value;
+                    if (label == "Weight") {
+                      AppConstants.weight = value.round();
+                    } else if (label == "Age") {
+                      AppConstants.age = value.round();
+                    }
+                  }
+                },
+              ),
+            ),
+            Text(
+              unit,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: () => _incrementValue(notifier, false),
+              onLongPress: () => _startTimer(notifier, false, 0, 300),
+              onLongPressEnd: (_) => _stopTimer(),
+              child: _buildIncrementButton(FontAwesomeIcons.minus),
+            ),
+            const SizedBox(width: 20),
+            GestureDetector(
+              onTap: () => _incrementValue(notifier, true),
+              onLongPress: () => _startTimer(notifier, true, 0, 300),
+              onLongPressEnd: (_) => _stopTimer(),
+              child: _buildIncrementButton(FontAwesomeIcons.plus),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIncrementButton(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppConstants.mainColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        icon,
+        size: 16,
+        color: AppConstants.mainColor,
+      ),
+    );
+  }
+
+  void _showResult(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return const BmrResult();
+      },
     );
   }
 }

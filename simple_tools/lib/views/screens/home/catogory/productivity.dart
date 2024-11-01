@@ -1,11 +1,91 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_tools/util/app_constants.dart';
+import 'package:simple_tools/util/catogoryselectionlist.dart';
 import 'package:simple_tools/views/screens/Recipe%20Organizer/recipe_main_screen.dart';
 import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome';
 import 'package:simple_tools/views/screens/studytimer/studytimerhomescreen';
+import 'dart:convert';
 
-class ProductivityPage extends StatelessWidget {
+class ProductivityPage extends StatefulWidget {
   const ProductivityPage({super.key});
+
+  @override
+  State<ProductivityPage> createState() => _ProductivityPageState();
+}
+
+class _ProductivityPageState extends State<ProductivityPage> {
+  final List<Widget> _toolCards = [];
+  final List<Tool> _selectedTools = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Load saved tools or use defaults
+    _loadSavedTools();
+  }
+
+  void _loadSavedTools() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedTools = prefs.getStringList('selectedTools');
+
+    if (savedTools != null) {
+      // Load saved tools
+      for (var toolJson in savedTools) {
+        final Map<String, dynamic> toolMap = json.decode(toolJson);
+        final tool = ToolsList.allTools.firstWhere(
+          (t) => t.title == toolMap['title'],
+          orElse: () => ToolsList.allTools[0],
+        );
+        _selectedTools.add(tool);
+      }
+    } else {
+      // Add default tools if no saved tools exist
+      _selectedTools.addAll([
+        Tool(
+          title: AppConstants.pomodorotimer,
+          icon: Icons.timer,
+          nextScreen: PomodoroHome(),
+        ),
+        Tool(
+          title: AppConstants.studyTimer,
+          icon: Icons.school,
+          nextScreen: StudyTimerHomeScreen(),
+        ),
+        Tool(
+          title: AppConstants.reciepeOrganizer,
+          icon: Icons.task_alt,
+          nextScreen: RecipeMainScreen(),
+        ),
+      ]);
+    }
+
+    _rebuildToolCards();
+  }
+
+  void _saveTools() async {
+    final prefs = await SharedPreferences.getInstance();
+    final toolsToSave = _selectedTools
+        .map((tool) => json.encode({
+              'title': tool.title,
+            }))
+        .toList();
+    await prefs.setStringList('selectedTools', toolsToSave);
+  }
+
+  void _rebuildToolCards() {
+    _toolCards.clear();
+    for (var tool in _selectedTools) {
+      _toolCards.add(
+        _buildToolCard(
+          title: tool.title,
+          nextScreen: tool.nextScreen,
+          icon: tool.icon,
+        ),
+      );
+    }
+    setState(() {});
+  }
 
   Widget _buildToolCard({
     required String title,
@@ -19,6 +99,36 @@ class ProductivityPage extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (context) => nextScreen),
           );
+        },
+        onLongPress: () {
+          // Only show delete dialog for non-default tools
+          if (!_isDefaultTool(title)) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Delete Tool'),
+                content: Text('Do you want to remove $title from your tools?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedTools
+                            .removeWhere((tool) => tool.title == title);
+                        _rebuildToolCards();
+                        _saveTools();
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Delete'),
+                  ),
+                ],
+              ),
+            );
+          }
         },
         child: Container(
           decoration: BoxDecoration(
@@ -64,15 +174,47 @@ class ProductivityPage extends StatelessWidget {
     );
   }
 
+  bool _isDefaultTool(String title) {
+    return title == AppConstants.pomodorotimer ||
+        title == AppConstants.studyTimer ||
+        title == AppConstants.reciepeOrganizer;
+  }
+
   Widget _buildAddButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Show dialog to add new tool
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Add New Tool'),
-            content: const Text('Feature coming soon!'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: ToolsList.allTools.length,
+                itemBuilder: (context, index) {
+                  final tool = ToolsList.allTools[index];
+                  bool isAdded =
+                      _selectedTools.any((t) => t.title == tool.title);
+                  return ListTile(
+                    enabled: !isAdded,
+                    leading: Icon(tool.icon),
+                    title: Text(tool.title),
+                    trailing: isAdded ? const Icon(Icons.check) : null,
+                    onTap: () {
+                      if (!isAdded) {
+                        setState(() {
+                          _selectedTools.add(tool);
+                          _rebuildToolCards();
+                          _saveTools();
+                        });
+                        Navigator.pop(context);
+                      }
+                    },
+                  );
+                },
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -153,21 +295,7 @@ class ProductivityPage extends StatelessWidget {
                   mainAxisSpacing: 20,
                   crossAxisSpacing: 20,
                   children: [
-                    _buildToolCard(
-                      title: AppConstants.pomodorotimer,
-                      nextScreen: PomodoroHome(),
-                      icon: Icons.timer,
-                    ),
-                    _buildToolCard(
-                      title: AppConstants.studyTimer,
-                      nextScreen: StudyTimerHomeScreen(),
-                      icon: Icons.school,
-                    ),
-                    _buildToolCard(
-                      title: AppConstants.reciepeOrganizer,
-                      nextScreen: RecipeMainScreen(), // Placeholder
-                      icon: Icons.task_alt,
-                    ),
+                    ..._toolCards,
                     _buildAddButton(context),
                   ],
                 ),

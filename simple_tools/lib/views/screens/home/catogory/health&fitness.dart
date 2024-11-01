@@ -1,10 +1,89 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_tools/util/app_constants.dart';
+import 'package:simple_tools/util/catogoryselectionlist.dart';
 import 'package:simple_tools/views/screens/bmi/bmi.dart';
 import 'package:simple_tools/views/screens/bmr/bmr.dart';
+import 'dart:convert';
 
-class HealthAndFitnessPage extends StatelessWidget {
+import 'package:simple_tools/views/screens/deviceinfo/deviceinfohomepage';
+
+class HealthAndFitnessPage extends StatefulWidget {
   const HealthAndFitnessPage({super.key});
+
+  @override
+  State<HealthAndFitnessPage> createState() => _HealthAndFitnessPageState();
+}
+
+class _HealthAndFitnessPageState extends State<HealthAndFitnessPage> {
+  final List<Widget> _toolCards = [];
+  final List<Tool> _selectedTools = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedTools();
+  }
+
+  void _loadSavedTools() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedTools = prefs.getStringList('selectedHealthTools');
+
+    if (savedTools != null) {
+      for (var toolJson in savedTools) {
+        final Map<String, dynamic> toolMap = json.decode(toolJson);
+        final tool = ToolsList.allTools.firstWhere(
+          (t) => t.title == toolMap['title'],
+          orElse: () => ToolsList.allTools[0],
+        );
+        _selectedTools.add(tool);
+      }
+    } else {
+      _selectedTools.addAll([
+        Tool(
+          title: AppConstants.bmi,
+          icon: Icons.monitor_weight_outlined,
+          nextScreen: Startup(),
+        ),
+        Tool(
+          title: AppConstants.bmr,
+          icon: Icons.local_fire_department_outlined,
+          nextScreen: BMR(),
+        ),
+        Tool(
+          title: AppConstants.deviceUsage,
+          icon: Icons.timer_outlined,
+          nextScreen: DeviceInfoHomePage(),
+        ),
+      ]);
+    }
+
+    _rebuildToolCards();
+  }
+
+  void _saveTools() async {
+    final prefs = await SharedPreferences.getInstance();
+    final toolsToSave = _selectedTools
+        .map((tool) => json.encode({
+              'title': tool.title,
+            }))
+        .toList();
+    await prefs.setStringList('selectedHealthTools', toolsToSave);
+  }
+
+  void _rebuildToolCards() {
+    _toolCards.clear();
+    for (var tool in _selectedTools) {
+      _toolCards.add(
+        _buildToolCard(
+          title: tool.title,
+          nextScreen: tool.nextScreen,
+          icon: tool.icon,
+        ),
+      );
+    }
+    setState(() {});
+  }
 
   Widget _buildToolCard({
     required String title,
@@ -18,6 +97,35 @@ class HealthAndFitnessPage extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (context) => nextScreen),
           );
+        },
+        onLongPress: () {
+          if (!_isDefaultTool(title)) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Delete Tool'),
+                content: Text('Do you want to remove $title from your tools?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedTools
+                            .removeWhere((tool) => tool.title == title);
+                        _rebuildToolCards();
+                        _saveTools();
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Delete'),
+                  ),
+                ],
+              ),
+            );
+          }
         },
         child: Container(
           decoration: BoxDecoration(
@@ -63,15 +171,47 @@ class HealthAndFitnessPage extends StatelessWidget {
     );
   }
 
+  bool _isDefaultTool(String title) {
+    return title == AppConstants.bmi ||
+        title == AppConstants.bmr ||
+        title == AppConstants.deviceUsage;
+  }
+
   Widget _buildAddButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Show dialog to add new tool
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Add New Tool'),
-            content: const Text('Feature coming soon!'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: ToolsList.allTools.length,
+                itemBuilder: (context, index) {
+                  final tool = ToolsList.allTools[index];
+                  bool isAdded =
+                      _selectedTools.any((t) => t.title == tool.title);
+                  return ListTile(
+                    enabled: !isAdded,
+                    leading: Icon(tool.icon),
+                    title: Text(tool.title),
+                    trailing: isAdded ? const Icon(Icons.check) : null,
+                    onTap: () {
+                      if (!isAdded) {
+                        setState(() {
+                          _selectedTools.add(tool);
+                          _rebuildToolCards();
+                          _saveTools();
+                        });
+                        Navigator.pop(context);
+                      }
+                    },
+                  );
+                },
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -152,21 +292,7 @@ class HealthAndFitnessPage extends StatelessWidget {
                   mainAxisSpacing: 20,
                   crossAxisSpacing: 20,
                   children: [
-                    _buildToolCard(
-                      title: AppConstants.bmi,
-                      nextScreen: Startup(),
-                      icon: Icons.monitor_weight_outlined,
-                    ),
-                    _buildToolCard(
-                      title: AppConstants.bmr,
-                      nextScreen: BMR(),
-                      icon: Icons.local_fire_department_outlined,
-                    ),
-                    _buildToolCard(
-                      title: 'Workout Timer',
-                      nextScreen: Container(), // Placeholder
-                      icon: Icons.timer_outlined,
-                    ),
+                    ..._toolCards,
                     _buildAddButton(context),
                   ],
                 ),

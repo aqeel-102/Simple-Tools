@@ -45,6 +45,9 @@ dependencies:
   network_info_plus:
   package_info_plus:
   system_info2: ^3.0.1
+  community_charts_flutter: ^1.0.2
+  fl_chart: ^0.69.0
+  flutter_background_service: ^5.0.10
 
 
 

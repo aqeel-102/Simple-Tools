@@ -5,7 +5,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:simple_tools/views/screens/bmi/result.dart';
 import '../../../../util/app_constants.dart';
 import '../../custom_widgets/button.dart';
-import '../../custom_widgets/bmi_widgets.dart';
 
 class Startup extends StatefulWidget {
   const Startup({super.key});
@@ -70,6 +69,16 @@ class _StartupState extends State<Startup> {
     }
   }
 
+  void _incrementValue(ValueNotifier<double> notifier, bool increment) {
+    double newValue = increment ? notifier.value + 1 : notifier.value - 1;
+    if (newValue >= 0 && newValue <= 300) {
+      setState(() {
+        notifier.value = newValue;
+        _updateController(notifier);
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -90,49 +99,73 @@ class _StartupState extends State<Startup> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Center(child: Text("Body Mass Calculator")),
-        backgroundColor: const Color(0xFF448AFF),
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          "BMI Calculator",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.2,
-                child: Row(
-                  children: [
-                    _buildGenderSelector(
-                        1, "Male", FontAwesomeIcons.mars, _maleColor),
-                    const SizedBox(width: 10),
-                    _buildGenderSelector(
-                        2, "Female", FontAwesomeIcons.venus, _femaleColor),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.25,
-                child: _buildHeightSelector(),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.25,
-                child: Row(
-                  children: [
-                    _buildWeightSelector(),
-                    const SizedBox(width: 10),
-                    _buildAgeSelector(),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              BottomButton(
-                value: 'Calculate',
-                onPressed: () => _showResult(context),
-              ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).scaffoldBackgroundColor,
+              Theme.of(context).primaryColor.withOpacity(0.1),
             ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.2,
+                  child: Row(
+                    children: [
+                      _buildGenderSelector(
+                          1, "Male", FontAwesomeIcons.mars, _maleColor),
+                      const SizedBox(width: 16),
+                      _buildGenderSelector(
+                          2, "Female", FontAwesomeIcons.venus, _femaleColor),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.25,
+                  child: _buildHeightSelector(),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.25,
+                  child: Row(
+                    children: [
+                      _buildWeightSelector(),
+                      const SizedBox(width: 16),
+                      _buildAgeSelector(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                BottomButton(
+                  value: 'Calculate BMI',
+                  onPressed: () => _showResult(context),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -144,22 +177,60 @@ class _StartupState extends State<Startup> {
     return Expanded(
       child: GestureDetector(
         onTap: () => _toggleGender(gender),
-        child: CustomContainer(
-          colors: color,
-          cardchild: Containcard(icon: icon, txt: label),
+        child: Container(
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 2,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 40,
+                color: color,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeightSelector() {
-    return CustomContainer(
-      colors: AppConstants.mainColor,
-      cardchild: Column(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppConstants.mainColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppConstants.mainColor.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text("Height",
-              style: TextStyle(color: Colors.white60, fontSize: 15)),
+          const Text(
+            "Height",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           ValueListenableBuilder<double>(
             valueListenable: _heightNotifier,
             builder: (context, height, child) {
@@ -173,43 +244,62 @@ class _StartupState extends State<Startup> {
                     child: TextFormField(
                       textAlign: TextAlign.center,
                       controller: AppConstants.bmrheightController,
-                      decoration:
-                          const InputDecoration(border: InputBorder.none),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                      ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       style: const TextStyle(
-                          color: Colors.white60,
-                          fontSize: 50,
-                          fontWeight: FontWeight.w900),
+                        fontSize: 40,
+                        fontWeight: FontWeight.w700,
+                      ),
                       onChanged: (value) {
                         double? newHeight = double.tryParse(value);
                         if (newHeight != null &&
                             newHeight >= AppConstants.minHeight &&
                             newHeight <= AppConstants.maxHeight) {
-                          _heightNotifier.value = newHeight;
-                          AppConstants.height = newHeight;
+                          setState(() {
+                            _heightNotifier.value = newHeight;
+                            AppConstants.height = newHeight;
+                            AppConstants.bmrheightController.text = value;
+                          });
                         }
                       },
                     ),
                   ),
-                  const Text("CM"),
+                  const Text(
+                    "cm",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               );
             },
           ),
-          Slider(
-            value: _heightNotifier.value,
-            min: AppConstants.minHeight.toDouble(),
-            max: AppConstants.maxHeight.toDouble(),
-            activeColor: const Color.fromARGB(255, 184, 173, 143),
-            onChanged: (double newValue) {
-              setState(() {
-                _heightNotifier.value = newValue;
-                AppConstants.height = newValue.round().toDouble();
-                AppConstants.bmrheightController.text =
-                    newValue.round().toString();
-              });
-            },
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: AppConstants.mainColor,
+              inactiveTrackColor: AppConstants.mainColor.withOpacity(0.2),
+              thumbColor: AppConstants.mainColor,
+              overlayColor: AppConstants.mainColor.withOpacity(0.2),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
+            ),
+            child: Slider(
+              value: _heightNotifier.value,
+              min: AppConstants.minHeight.toDouble(),
+              max: AppConstants.maxHeight.toDouble(),
+              onChanged: (double newValue) {
+                setState(() {
+                  _heightNotifier.value = newValue;
+                  AppConstants.height = newValue.round().toDouble();
+                  AppConstants.bmrheightController.text =
+                      newValue.round().toString();
+                });
+              },
+            ),
           ),
         ],
       ),
@@ -218,19 +308,35 @@ class _StartupState extends State<Startup> {
 
   Widget _buildWeightSelector() {
     return Expanded(
-      child: CustomContainer(
-        colors: AppConstants.mainColor,
-        cardchild: _buildNumberSelector(
-            "Weight", _weightNotifier, AppConstants.weightController, "KG"),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppConstants.mainColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppConstants.mainColor.withOpacity(0.3),
+            width: 2,
+          ),
+        ),
+        child: _buildNumberSelector(
+            "Weight", _weightNotifier, AppConstants.weightController, "kg"),
       ),
     );
   }
 
   Widget _buildAgeSelector() {
     return Expanded(
-      child: CustomContainer(
-        colors: AppConstants.mainColor,
-        cardchild: _buildNumberSelector(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppConstants.mainColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppConstants.mainColor.withOpacity(0.3),
+            width: 2,
+          ),
+        ),
+        child: _buildNumberSelector(
             "Age", _ageNotifier, AppConstants.ageController, ""),
       ),
     );
@@ -241,13 +347,18 @@ class _StartupState extends State<Startup> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(label,
-            style: const TextStyle(color: Colors.white60, fontSize: 15)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              width: 100,
+              width: 80,
               child: TextFormField(
                 textAlign: TextAlign.center,
                 controller: controller,
@@ -255,9 +366,9 @@ class _StartupState extends State<Startup> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 50,
-                    fontWeight: FontWeight.w900),
+                  fontSize: 40,
+                  fontWeight: FontWeight.w700,
+                ),
                 onChanged: (newValue) {
                   double? value = double.tryParse(newValue);
                   if (value != null) {
@@ -271,17 +382,31 @@ class _StartupState extends State<Startup> {
                 },
               ),
             ),
-            Text(unit, style: const TextStyle(fontSize: 15)),
+            Text(
+              unit,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildIncrementButton(FontAwesomeIcons.minus,
-                () => _startTimer(notifier, false, 0, 300)),
-            const SizedBox(width: 15),
-            _buildIncrementButton(FontAwesomeIcons.plus,
-                () => _startTimer(notifier, true, 0, 300)),
+            GestureDetector(
+              onTap: () => _incrementValue(notifier, false),
+              onLongPress: () => _startTimer(notifier, false, 0, 300),
+              onLongPressEnd: (_) => _stopTimer(),
+              child: _buildIncrementButton(FontAwesomeIcons.minus, () {}),
+            ),
+            const SizedBox(width: 20),
+            GestureDetector(
+              onTap: () => _incrementValue(notifier, true),
+              onLongPress: () => _startTimer(notifier, true, 0, 300),
+              onLongPressEnd: (_) => _stopTimer(),
+              child: _buildIncrementButton(FontAwesomeIcons.plus, () {}),
+            ),
           ],
         ),
       ],
@@ -289,12 +414,16 @@ class _StartupState extends State<Startup> {
   }
 
   Widget _buildIncrementButton(IconData icon, VoidCallback onPressed) {
-    return GestureDetector(
-      onLongPress: onPressed,
-      onLongPressEnd: (_) => _stopTimer(),
-      child: RoundButton(
-        icon: icon,
-        onpressed: onPressed,
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppConstants.mainColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        icon,
+        size: 16,
+        color: AppConstants.mainColor,
       ),
     );
   }
@@ -303,6 +432,7 @@ class _StartupState extends State<Startup> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return const Result();
       },

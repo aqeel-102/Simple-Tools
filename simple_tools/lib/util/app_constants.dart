@@ -11,8 +11,8 @@ class AppConstants {
   static const bmr = 'Basal Metabolic Rate (BMR)';
   static const studyTimer = 'Study Timer';
   static const timer = 'Count Down Timer';
-  static const qrCode = 'QR Code';
-  static const barCode = 'Bar Code';
+  static const qrCode = 'QR Code Scanner';
+  static const barCode = 'Bar Code Scanner';
   static const bmrScreenTitle = 'BMR';
   static const zakat = 'Zakat Calculator';
   static const reciepeOrganizer = 'Reciepe Organizer';

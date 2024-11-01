@@ -63,10 +63,18 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
     await _saveBarcodeHistory();
   }
 
+  void _updateHistory(List<String> newHistory) {
+    setState(() {
+      barcodeHistory = newHistory;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
+        automaticallyImplyLeading: false,
         title: const Text('Advanced Barcode Scanner'),
         backgroundColor: AppConstants.mainColor,
         actions: [
@@ -76,98 +84,124 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      BarcodeScannerHistory(history: barcodeHistory),
+                  builder: (context) => BarcodeScannerHistory(
+                    history: barcodeHistory,
+                    onHistoryChanged: _updateHistory,
+                  ),
                 ),
               );
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: AiBarcodeScanner(
-              hideSheetTitle: true,
-              hideSheetDragHandler: true,
-              onDetect: (BarcodeCapture capture) {
-                final scannedValue = capture.barcodes.first.rawValue;
-                if (scannedValue != null) {
-                  _addToHistory(scannedValue);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BarcodeDetailScreen(
-                        barcodeData: scannedValue,
+      body: Container(
+        color: AppConstants.mainColor,
+        child: Column(
+          children: [
+            Expanded(
+              child: AiBarcodeScanner(
+                hideSheetTitle: true,
+                hideSheetDragHandler: true,
+                onDetect: (BarcodeCapture capture) {
+                  final scannedValue = capture.barcodes.first.rawValue;
+                  if (scannedValue != null) {
+                    _addToHistory(scannedValue);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BarcodeDetailScreen(
+                          barcodeData: scannedValue,
+                        ),
+                      ),
+                    );
+                  }
+                },
+                controller: _controller,
+                validator: (BarcodeCapture capture) {
+                  return capture.barcodes.isNotEmpty;
+                },
+                errorBuilder: (context, error, child) {
+                  return Container(
+                    color: Colors.black,
+                    child: Center(
+                      child: Text(
+                        error.toString(),
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   );
-                }
-              },
-              controller: _controller,
-              validator: (BarcodeCapture capture) {
-                return capture.barcodes.isNotEmpty;
-              },
-              errorBuilder: (context, error, child) {
-                return Container(
-                  color: Colors.black,
-                  child: Center(
-                    child: Text(
-                      error.toString(),
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                );
-              },
-              placeholderBuilder: (context, child) {
-                return Container(
-                  color: Colors.black,
-                  child: const Center(
-                    child: Text(
-                      'Place a barcode in the camera view',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Wrap(
-                  spacing: 8.0,
-                  runSpacing: 8.0,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                BarcodeScannerHistory(history: barcodeHistory),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppConstants.mainColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                },
+                placeholderBuilder: (context, child) {
+                  return Container(
+                    color: Colors.black,
+                    child: const Center(
+                      child: Text(
+                        'Place a barcode in the camera view',
+                        style: TextStyle(color: Colors.white),
                       ),
-                      child: const Text('View History',
-                          style: TextStyle(fontSize: 14)),
                     ),
-                  ],
-                ),
-              ],
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 8.0,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BarcodeScannerHistory(
+                                history: barcodeHistory,
+                                onHistoryChanged: _updateHistory,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              const Color.fromARGB(255, 67, 100, 152),
+                          foregroundColor: Colors.white,
+                          elevation: 4,
+                          shadowColor: AppConstants.mainColor.withOpacity(0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.history, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'View History',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

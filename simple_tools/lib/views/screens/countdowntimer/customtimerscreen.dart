@@ -27,7 +27,7 @@ class AddEditTimerScreenState extends State<AddEditTimerScreen> {
   int selectedHours = 0;
   int selectedMinutes = 0;
   int selectedSeconds = 0;
-  String selectedRingtone = AppConstants.defaultRingtone; // Use constant
+  String selectedRingtone = AppConstants.defaultRingtone;
 
   @override
   void initState() {
@@ -56,15 +56,18 @@ class AddEditTimerScreenState extends State<AddEditTimerScreen> {
               children: [
                 ListTile(
                   title: const Text(AppConstants.defaultRingtone),
-                  onTap: () => Navigator.pop(context, AppConstants.defaultRingtone),
+                  onTap: () =>
+                      Navigator.pop(context, AppConstants.defaultRingtone),
                 ),
                 ListTile(
                   title: const Text(AppConstants.alarmRingtone),
-                  onTap: () => Navigator.pop(context, AppConstants.alarmRingtone),
+                  onTap: () =>
+                      Navigator.pop(context, AppConstants.alarmRingtone),
                 ),
                 ListTile(
                   title: const Text(AppConstants.notificationRingtone),
-                  onTap: () => Navigator.pop(context, AppConstants.notificationRingtone),
+                  onTap: () =>
+                      Navigator.pop(context, AppConstants.notificationRingtone),
                 ),
               ],
             ),
@@ -101,7 +104,6 @@ class AddEditTimerScreenState extends State<AddEditTimerScreen> {
       seconds: selectedSeconds,
     );
 
-    // Save to SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final timerCount = prefs.getInt('timerCount') ?? 0;
     await prefs.setString('timer_$timerCount', _nameController.text.trim());
@@ -120,138 +122,166 @@ class AddEditTimerScreenState extends State<AddEditTimerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(AppConstants.appBarTitle),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        title: const Text(
+          'Add Timer',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Container(
-                  width: 350,
-                  height: 300,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppConstants.secondaryColor,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      SizedBox(
-                        width: 70,
-                        child: ScrollableTimeWheel(
-                          label: 'H',
-                          max: 23,
-                          initialValue: selectedHours,
-                          onChanged: (hour) {
-                            setState(() {
-                              selectedHours = hour;
-                            });
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        width: 70,
-                        child: ScrollableTimeWheel(
-                          label: 'M',
-                          max: 59,
-                          initialValue: selectedMinutes,
-                          onChanged: (minute) {
-                            setState(() {
-                              selectedMinutes = minute;
-                            });
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        width: 70,
-                        child: ScrollableTimeWheel(
-                          label: 'S',
-                          max: 59,
-                          initialValue: selectedSeconds,
-                          onChanged: (second) {
-                            setState(() {
-                              selectedSeconds = second;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                height: MediaQuery.of(context).size.height * 0.35,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppConstants.mainColor.withOpacity(0.30),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: AppConstants.mainColor.withOpacity(0.3),
+                    width: 2,
                   ),
                 ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      child: ScrollableTimeWheel(
+                        label: 'H',
+                        max: 23,
+                        initialValue: selectedHours,
+                        onChanged: (hour) {
+                          setState(() {
+                            selectedHours = hour;
+                          });
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: 80,
+                      child: ScrollableTimeWheel(
+                        label: 'M',
+                        max: 59,
+                        initialValue: selectedMinutes,
+                        onChanged: (minute) {
+                          setState(() {
+                            selectedMinutes = minute;
+                          });
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: 80,
+                      child: ScrollableTimeWheel(
+                        label: 'S',
+                        max: 59,
+                        initialValue: selectedSeconds,
+                        onChanged: (second) {
+                          setState(() {
+                            selectedSeconds = second;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppConstants.mainColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppConstants.mainColor.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
                 child: TextField(
-                  textAlign: TextAlign.start,
+                  controller: _nameController,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.timer),
                     hintText: 'Timer Name',
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Colors.black38, // Border color when not focused
-                        width: 2.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Colors.blue, // Border color when focused
-                        width: 2.0,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[200], // Background color inside the field
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(16),
+                    prefixIcon:
+                        Icon(Icons.timer, color: AppConstants.mainColor),
+                    counterText: '',
                   ),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z\s]')),
                   ],
                   maxLength: 15,
-                  controller: _nameController,
-                )
+                ),
               ),
-              const SizedBox(height: 20),
-              GestureDetector(
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: GestureDetector(
                 onTap: _selectRingtone,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 0) ,
-                  child: Container(
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.blueGrey),
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppConstants.mainColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppConstants.mainColor.withOpacity(0.3),
+                      width: 1,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Selected Ringtone: $selectedRingtone',
-                          style: const TextStyle(
-                            color: Colors.black,
-                          ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Selected Ringtone: $selectedRingtone',
+                        style: TextStyle(
+                          color: AppConstants.mainColor,
+                          fontSize: 16,
                         ),
-                        const Icon(Icons.arrow_forward, color: Colors.white),
-                      ],
+                      ),
+                      Icon(Icons.arrow_forward_ios,
+                          color: AppConstants.mainColor),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                width: double.infinity,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppConstants.mainColor,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: TextButton(
+                  onPressed: _saveTimer,
+                  child: const Text(
+                    'Save Timer',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 100),
-              Container(
-                alignment: Alignment.bottomCenter,
-                child: ElevatedButton(
-                  onPressed: _saveTimer,
-                  child: const Text('Save Timer'),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

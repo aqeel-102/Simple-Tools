@@ -41,68 +41,93 @@ class _ResultState extends State<Result> {
   @override
   void initState() {
     super.initState();
-    
-     calculateBMI();
-      status  = determineCategory(foundedvalue: AppConstants.result);
-    
+    calculateBMI();
+    status = determineCategory(foundedvalue: AppConstants.result);
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        height: 600,
+        height: MediaQuery.of(context).size.height * 0.8,
         decoration: const BoxDecoration(
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20.0),
-            topRight: Radius.circular(20.0),
+            topLeft: Radius.circular(30.0),
+            topRight: Radius.circular(30.0),
           ),
         ),
         child: Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: Center(
             child: Container(
-              width: 300,
-              height: 400,
+              width: MediaQuery.of(context).size.width * 0.85,
+              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
               decoration: BoxDecoration(
-                color: AppConstants.mainColor,
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Your Result",
-                      style: TextStyle(
-                          fontSize: 20,
-                          color: AppConstants.textColor,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "BMI: ${AppConstants.result.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                          fontSize: 36,
-                          color: AppConstants.textColor,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Center(
-                        child: Text(
-                          "Your Health: $status",
-                          style: const TextStyle(
-                              fontSize: 18,
-                              color: AppConstants.textColor,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-
-
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppConstants.mainColor,
+                    AppConstants.mainColor.withOpacity(0.8),
                   ],
                 ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppConstants.mainColor.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Your Result",
+                    style: TextStyle(
+                      fontSize: 28,
+                      color: AppConstants.textColor,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      AppConstants.result.toStringAsFixed(1),
+                      style: const TextStyle(
+                        fontSize: 48,
+                        color: AppConstants.textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: Text(
+                      status ?? "",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        color: AppConstants.textColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
