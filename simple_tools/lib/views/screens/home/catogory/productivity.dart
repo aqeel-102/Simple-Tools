@@ -4,8 +4,9 @@ import 'package:simple_tools/util/app_constants.dart';
 import 'package:simple_tools/util/catogoryselectionlist.dart';
 import 'package:simple_tools/views/screens/Recipe%20Organizer/recipe_main_screen.dart';
 import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome';
-import 'package:simple_tools/views/screens/studytimer/studytimerhomescreen';
 import 'dart:convert';
+
+import '../../studytimer/studytimerhomescreen.dart';
 
 class ProductivityPage extends StatefulWidget {
   const ProductivityPage({super.key});

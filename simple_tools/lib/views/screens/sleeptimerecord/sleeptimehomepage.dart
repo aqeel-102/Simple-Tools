@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 class SleepTimeHomePage extends StatefulWidget {
-  const SleepTimeHomePage({Key? key}) : super(key: key);
+  const SleepTimeHomePage({super.key});
 
   @override
   _SleepTimeHomePageState createState() => _SleepTimeHomePageState();
@@ -610,9 +610,15 @@ class _SleepTimeHomePageState extends State<SleepTimeHomePage> {
                           itemCount: alarms.length,
                           itemBuilder: (context, index) {
                             final alarm = alarms[index];
+                            final parts = alarm['time'].split(':');
+                            final hour = int.parse(parts[0]);
+                            final minute = parts[1];
+                            final period = hour >= 12 ? 'PM' : 'AM';
+                            final displayHour =
+                                hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
                             return ListTile(
                               leading: const Icon(Icons.alarm),
-                              title: Text(alarm['time']),
+                              title: Text('$displayHour:$minute $period'),
                               subtitle: Text('Ringtone: ${alarm['ringtone']}'),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,

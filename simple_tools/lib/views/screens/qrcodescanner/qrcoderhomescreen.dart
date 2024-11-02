@@ -1,5 +1,6 @@
 import 'package:ai_barcode_scanner/ai_barcode_scanner.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../util/app_constants.dart';
 import 'qrcodedetailscreen.dart';
@@ -14,8 +15,6 @@ class QrCoder extends StatefulWidget {
 }
 
 class _QrCoderState extends State<QrCoder> {
-  String? scannedValue;
-  bool isScanning = true;
   late MobileScannerController _controller;
   List<String> qrCodeHistory = [];
 
@@ -28,12 +27,20 @@ class _QrCoderState extends State<QrCoder> {
       torchEnabled: false,
     );
     _loadqrCodeHistory();
+    _requestCameraPermission(); // Request camera permission
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _requestCameraPermission() async {
+    var status = await Permission.camera.status;
+    if (!status.isGranted) {
+      await Permission.camera.request();
+    }
   }
 
   Future<void> _loadqrCodeHistory() async {

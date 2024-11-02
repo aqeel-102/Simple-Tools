@@ -4,62 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_tools/util/app_constants.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
+import 'package:simple_tools/views/screens/studytimer/settingsdailog.dart';
+import 'package:simple_tools/views/screens/studytimer/taskmodel.dart';
 
-// Models
-class Task {
-  final String name;
-  final List<SubTask> subTasks;
-
-  Task({required this.name, required this.subTasks}) {
-    if (name.isEmpty) {
-      throw ArgumentError('Task name cannot be empty');
-    }
-    if (subTasks.isEmpty) {
-      throw ArgumentError('Task must have at least one subtask');
-    }
-  }
-
-  int get totalTime => subTasks.fold(0, (sum, subTask) => sum + subTask.timer);
-
-  factory Task.fromJson(String json) {
-    try {
-      final parts = json.split('|');
-      if (parts.length != 2) throw FormatException('Invalid task format');
-      
-      final subTaskParts = parts[1].split(',');
-      return Task(
-        name: parts[0],
-        subTasks: subTaskParts.map((e) {
-          final subTaskData = e.split(':');
-          if (subTaskData.length != 2) throw FormatException('Invalid subtask format');
-          
-          return SubTask(
-            name: subTaskData[0],
-            timer: int.parse(subTaskData[1])
-          );
-        }).toList(),
-      );
-    } catch (e) {
-      throw FormatException('Failed to parse task: $e');
-    }
-  }
-
-  String toJson() => '$name|${subTasks.map((st) => '${st.name}:${st.timer}').join(',')}';
-}
-
-class SubTask {
-  final String name;
-  final int timer;
-
-  SubTask({required this.name, required this.timer}) {
-    if (name.isEmpty) {
-      throw ArgumentError('Subtask name cannot be empty');
-    }
-    if (timer <= 0) {
-      throw ArgumentError('Timer must be greater than 0');
-    }
-  }
-}
+import 'bottomsheet.dart';
 
 // View Models
 class StudyTimerViewModel extends ChangeNotifier {
@@ -93,7 +41,7 @@ class StudyTimerViewModel extends ChangeNotifier {
 
   List<Map<String, dynamic>> get nextSubTasks {
     if (tasks.isEmpty) return [];
-    
+
     try {
       List<Map<String, dynamic>> nextTasks = [];
       int taskIndex = currentTaskIndex;
@@ -102,7 +50,8 @@ class StudyTimerViewModel extends ChangeNotifier {
       while (nextTasks.length < 3 && taskIndex < tasks.length) {
         if (subTaskIndex < tasks[taskIndex].subTasks.length) {
           nextTasks.add({
-            'name': '${tasks[taskIndex].name} - ${tasks[taskIndex].subTasks[subTaskIndex].name}',
+            'name':
+                '${tasks[taskIndex].name} - ${tasks[taskIndex].subTasks[subTaskIndex].name}',
             'time': tasks[taskIndex].subTasks[subTaskIndex].timer
           });
           subTaskIndex++;
@@ -133,14 +82,14 @@ class StudyTimerViewModel extends ChangeNotifier {
   Future<void> loadData() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      
+
       final tasksList = prefs.getStringList('study_tasks') ?? [];
       tasks = tasksList.map((e) => Task.fromJson(e)).toList();
-      
+
       breakTime = prefs.getInt('break_time') ?? 5 * 60;
       completedSessions = prefs.getInt('completed_sessions') ?? 0;
       totalStudyTime = prefs.getInt('total_study_time') ?? 0;
-      
+
       calculateTotalStudyTime();
       notifyListeners();
     } catch (e) {
@@ -157,7 +106,8 @@ class StudyTimerViewModel extends ChangeNotifier {
   Future<void> saveData() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('study_tasks', tasks.map((e) => e.toJson()).toList());
+      await prefs.setStringList(
+          'study_tasks', tasks.map((e) => e.toJson()).toList());
       await prefs.setInt('break_time', breakTime);
       await prefs.setInt('completed_sessions', completedSessions);
       await prefs.setInt('total_study_time', totalStudyTime);
@@ -170,10 +120,11 @@ class StudyTimerViewModel extends ChangeNotifier {
   void startStudySession() {
     try {
       if (tasks.isEmpty) throw Exception('No tasks available');
-      
+
       isStudying = true;
       isPaused = false;
-      currentSessionTime = tasks[currentTaskIndex].subTasks[currentSubTaskIndex].timer;
+      currentSessionTime =
+          tasks[currentTaskIndex].subTasks[currentSubTaskIndex].timer;
       notifyListeners();
     } catch (e) {
       debugPrint('Error starting session: $e');
@@ -209,11 +160,12 @@ class StudyTimerViewModel extends ChangeNotifier {
 
       if (isStudying) {
         currentSubTaskIndex++;
-        
+
         // Check if there are more subtasks in current task
         if (currentSubTaskIndex < tasks[currentTaskIndex].subTasks.length) {
           // Move to next subtask
-          currentSessionTime = tasks[currentTaskIndex].subTasks[currentSubTaskIndex].timer;
+          currentSessionTime =
+              tasks[currentTaskIndex].subTasks[currentSubTaskIndex].timer;
           // Ensure we're still in study mode
           isStudying = true;
           isResting = false;
@@ -222,7 +174,7 @@ class StudyTimerViewModel extends ChangeNotifier {
           // Current task complete, move to next task
           currentTaskIndex++;
           currentSubTaskIndex = 0;
-          
+
           if (currentTaskIndex < tasks.length) {
             // Start break before next task
             isStudying = false;
@@ -235,7 +187,8 @@ class StudyTimerViewModel extends ChangeNotifier {
             isResting = false;
             studyingsession = false;
             completedSessions++;
-            totalStudyTime += tasks.fold(0, (sum, task) => sum + task.totalTime);
+            totalStudyTime +=
+                tasks.fold(0, (sum, task) => sum + task.totalTime);
           }
         }
       } else if (isResting) {
@@ -245,7 +198,8 @@ class StudyTimerViewModel extends ChangeNotifier {
         studyingsession = true;
         currentSubTaskIndex = 0;
         if (currentTaskIndex < tasks.length) {
-          currentSessionTime = tasks[currentTaskIndex].subTasks[currentSubTaskIndex].timer;
+          currentSessionTime =
+              tasks[currentTaskIndex].subTasks[currentSubTaskIndex].timer;
         } else {
           // Safety check in case currentTaskIndex is out of bounds
           stopSession();
@@ -277,7 +231,7 @@ class StudyTimerViewModel extends ChangeNotifier {
     try {
       int index = tasks.indexOf(oldTask);
       if (index == -1) throw Exception('Task not found');
-      
+
       tasks[index] = newTask;
       calculateTotalStudyTime();
       notifyListeners();
@@ -304,11 +258,13 @@ class StudyTimerViewModel extends ChangeNotifier {
 
 // Widgets
 class StudyTimerHomeScreen extends StatefulWidget {
+  const StudyTimerHomeScreen({super.key});
+
   @override
-  _StudyTimerHomeScreenState createState() => _StudyTimerHomeScreenState();
+  StudyTimerHomeScreenState createState() => StudyTimerHomeScreenState();
 }
 
-class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
+class StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
   final StudyTimerViewModel viewModel = StudyTimerViewModel();
   final CountDownController controller = CountDownController();
   final AudioPlayer audioPlayer = AudioPlayer();
@@ -354,6 +310,7 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
       ),
     );
   }
+
   Widget _buildTimerCard(BuildContext context) {
     return Card(
       elevation: AppConstants.cardElevation,
@@ -388,16 +345,18 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
               autoStart: false,
               onComplete: () async {
                 try {
-                  await audioPlayer.play(AssetSource('sounds/notification.mp3'));
+                  await audioPlayer
+                      .play(AssetSource('sounds/notification.mp3'));
                   await Future.delayed(Duration(seconds: 3));
                   audioPlayer.stop();
-                  
+
                   bool? shouldContinue = await showDialog<bool>(
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
                         title: Text('Subtask Completed'),
-                        content: Text('Do you want to continue to the next subtask?'),
+                        content: Text(
+                            'Do you want to continue to the next subtask?'),
                         actions: <Widget>[
                           TextButton(
                             child: Text('No'),
@@ -419,7 +378,8 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
                   if (shouldContinue == true) {
                     await viewModel.onTimerComplete();
                     if (viewModel.isStudying || viewModel.isResting) {
-                      controller.restart(duration: viewModel.currentSessionTime);
+                      controller.restart(
+                          duration: viewModel.currentSessionTime);
                     }
                   } else {
                     viewModel.stopSession();
@@ -427,8 +387,7 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
                 } catch (e) {
                   debugPrint('Error in timer completion: $e');
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error completing timer'))
-                  );
+                      SnackBar(content: Text('Error completing timer')));
                   viewModel.stopSession();
                 }
               },
@@ -442,7 +401,9 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
                     try {
                       if (!viewModel.isStudying && !viewModel.isResting) {
                         viewModel.startStudySession();
-                        controller.restart(duration: viewModel.currentSessionTime - viewModel.elapsedTime);
+                        controller.restart(
+                            duration: viewModel.currentSessionTime -
+                                viewModel.elapsedTime);
                       } else if (viewModel.isPaused) {
                         viewModel.resumeSession();
                         controller.resume();
@@ -450,22 +411,24 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
                         viewModel.pauseSession();
                         controller.pause();
                         final time = controller.getTime();
-                        viewModel.elapsedTime = time != null ? viewModel.currentSessionTime - int.parse(time) : 0;
+                        viewModel.elapsedTime = time != null
+                            ? viewModel.currentSessionTime - int.parse(time)
+                            : 0;
                       }
                     } catch (e) {
                       debugPrint('Error toggling timer: $e');
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error controlling timer'))
-                      );
+                          SnackBar(content: Text('Error controlling timer')));
                     }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppConstants.mainColor,
                   ),
-                  child: Text(
-                    !viewModel.isStudying && !viewModel.isResting ? 'Start' : 
-                    viewModel.isPaused ? 'Resume' : 'Pause'
-                  ),
+                  child: Text(!viewModel.isStudying && !viewModel.isResting
+                      ? 'Start'
+                      : viewModel.isPaused
+                          ? 'Resume'
+                          : 'Pause'),
                 ),
                 if (viewModel.isStudying || viewModel.isResting) ...[
                   ElevatedButton(
@@ -476,8 +439,7 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
                       } catch (e) {
                         debugPrint('Error stopping timer: $e');
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error stopping timer'))
-                        );
+                            SnackBar(content: Text('Error stopping timer')));
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -488,13 +450,13 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
                   ElevatedButton(
                     onPressed: () {
                       try {
-                        controller.restart(duration: viewModel.currentSessionTime);
+                        controller.restart(
+                            duration: viewModel.currentSessionTime);
                         viewModel.elapsedTime = 0;
                       } catch (e) {
                         debugPrint('Error restarting timer: $e');
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error restarting timer'))
-                        );
+                            SnackBar(content: Text('Error restarting timer')));
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -508,51 +470,53 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
             if (viewModel.isStudying) ...[
               const SizedBox(height: AppConstants.smallSpacing),
               Text(
-                'Next Sub-tasks:', 
+                'Next Sub-tasks:',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppConstants.mainColor,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: AppConstants.mainColor,
+                    ),
               ),
               const SizedBox(height: 4),
               ...viewModel.nextSubTasks.take(2).map((task) => Container(
-                margin: const EdgeInsets.symmetric(vertical: 4.0),
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                decoration: BoxDecoration(
-                  color: AppConstants.secColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        task['name'].split(' - ')[1],
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    margin: const EdgeInsets.symmetric(vertical: 4.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12.0, vertical: 8.0),
+                    decoration: BoxDecoration(
+                      color: AppConstants.secColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppConstants.mainColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${task['time'] ~/ 60} min',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppConstants.mainColor,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            task['name'].split(' - ')[1],
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppConstants.mainColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${task['time'] ~/ 60} min',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: AppConstants.mainColor,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              )).toList(),
+                  )),
             ],
           ],
         ),
@@ -571,15 +535,16 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
           ),
           viewModel.tasks.isEmpty
               ? Center(
-                  child: Text('No tasks', style: Theme.of(context).textTheme.bodyMedium),
-                  
+                  child: Text('No tasks',
+                      style: Theme.of(context).textTheme.bodyMedium),
                 )
               : ListView.builder(
                   shrinkWrap: true,
                   physics: NeverScrollableScrollPhysics(),
                   itemCount: viewModel.tasks.length,
                   itemBuilder: (context, index) {
-                    return _buildTaskTile(context, viewModel.tasks[index], index);
+                    return _buildTaskTile(
+                        context, viewModel.tasks[index], index);
                   },
                 ),
         ],
@@ -605,18 +570,18 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
             icon: const Icon(Icons.delete),
             onPressed: () async {
               try {
-                if (viewModel.isStudying && viewModel.currentTaskIndex == index) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Cannot delete task while it is in progress'))
-                  );
+                if (viewModel.isStudying &&
+                    viewModel.currentTaskIndex == index) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content:
+                          Text('Cannot delete task while it is in progress')));
                   return;
                 }
                 viewModel.removeTask(index);
                 await viewModel.saveData();
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error removing task'))
-                );
+                    SnackBar(content: Text('Error removing task')));
               }
             },
           ),
@@ -638,7 +603,8 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
               Text('Total time: ${task.totalTime ~/ 60} minutes'),
               SizedBox(height: 8),
               Text('Subtasks:'),
-              ...task.subTasks.map((subtask) => Text('- ${subtask.name}: ${subtask.timer ~/ 60} minutes')),
+              ...task.subTasks.map((subtask) =>
+                  Text('- ${subtask.name}: ${subtask.timer ~/ 60} minutes')),
             ],
           ),
           actions: [
@@ -653,15 +619,15 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
               onPressed: () {
                 try {
                   Navigator.of(context).pop();
-                  viewModel.studyingsession = true;  // Changed from studyingsession to viewModel.studyingsession
+                  viewModel.studyingsession =
+                      true; // Changed from studyingsession to viewModel.studyingsession
                   viewModel.currentTaskIndex = index;
                   viewModel.currentSubTaskIndex = 0;
                   viewModel.startStudySession();
                   controller.restart(duration: viewModel.currentSessionTime);
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error starting task'))
-                  );
+                      SnackBar(content: Text('Error starting task')));
                 }
               },
             ),
@@ -715,9 +681,8 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
               await viewModel.saveData();
               Navigator.of(context).pop();
             } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error saving task: ${e.toString()}'))
-              );
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Error saving task: ${e.toString()}')));
             }
           },
         );
@@ -738,8 +703,7 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
               Navigator.of(context).pop();
             } catch (e) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error saving settings'))
-              );
+                  SnackBar(content: Text('Error saving settings')));
             }
           },
         );
@@ -747,324 +711,3 @@ class _StudyTimerHomeScreenState extends State<StudyTimerHomeScreen> {
     );
   }
 }
-
-class TaskEditBottomSheet extends StatefulWidget {
-  final Task? task;
-  final Function(Task) onSave;
-
-  const TaskEditBottomSheet({Key? key, this.task, required this.onSave}) : super(key: key);
-
-  @override
-  _TaskEditBottomSheetState createState() => _TaskEditBottomSheetState();
-}
-
-class _TaskEditBottomSheetState extends State<TaskEditBottomSheet> {
-  late String taskName;
-  late List<SubTask> subTasks;
-
-  @override
-  void initState() {
-    super.initState();
-    taskName = widget.task?.name ?? '';
-    subTasks = widget.task?.subTasks ?? [SubTask(name: 'Study Session 1', timer: 25 * 60)];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-      ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        left: 24,
-        right: 24,
-        top: 24,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            SizedBox(height: 24),
-            Text(
-              widget.task == null ? 'Create New Task' : 'Edit Task',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppConstants.mainColor,
-              ),
-            ),
-            SizedBox(height: 24),
-            _buildTaskNameField(),
-            SizedBox(height: 24),
-            Text(
-              'Study Sessions',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 16),
-            ...subTasks.asMap().entries.map((entry) {
-              return Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: _buildSubTaskField(entry.key, entry.value),
-              );
-            }).toList(),
-            _buildAddSubTaskButton(),
-            SizedBox(height: 32),
-            _buildActionButtons(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTaskNameField() {
-    return TextFormField(
-      decoration: InputDecoration(
-        labelText: 'Task Name',
-        hintText: 'Enter task name',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey[300]!),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppConstants.mainColor, width: 2),
-        ),
-        filled: true,
-        fillColor: Colors.grey[50],
-        prefixIcon: Icon(Icons.edit_outlined, color: AppConstants.mainColor),
-        floatingLabelStyle: TextStyle(color: AppConstants.mainColor),
-      ),
-      style: TextStyle(fontSize: 16),
-      initialValue: taskName,
-      onChanged: (value) => taskName = value,
-    );
-  }
-
-  Widget _buildSubTaskField(int index, SubTask subTask) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Session ${index + 1}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppConstants.mainColor,
-                ),
-              ),
-              Spacer(),
-              IconButton(
-                icon: Icon(Icons.remove_circle_outline, color: Colors.red[400]),
-                onPressed: () {
-                  setState(() {
-                    if (subTasks.length > 1) {
-                      subTasks.removeAt(index);
-                    }
-                  });
-                },
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Session Name',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                  initialValue: subTask.name,
-                  onChanged: (value) {
-                    setState(() {
-                      subTasks[index] = SubTask(name: value, timer: subTasks[index].timer);
-                    });
-                  },
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Minutes',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                  keyboardType: TextInputType.number,
-                  initialValue: (subTask.timer ~/ 60).toString(),
-                  onChanged: (value) {
-                    setState(() {
-                      subTasks[index] = SubTask(
-                        name: subTasks[index].name,
-                        timer: (int.tryParse(value) ?? 0) * 60,
-                      );
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddSubTaskButton() {
-    return Center(
-      child: TextButton.icon(
-        onPressed: () {
-          setState(() {
-            subTasks.add(SubTask(
-              name: 'Study Session ${subTasks.length + 1}',
-              timer: 25 * 60
-            ));
-          });
-        },
-        icon: Icon(Icons.add_circle_outline, color: AppConstants.mainColor),
-        label: Text(
-          'Add Study Session',
-          style: TextStyle(color: AppConstants.mainColor),
-        ),
-        style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-        ),
-        SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              try {
-                if (_validateTask()) {
-                  widget.onSave(Task(name: taskName, subTasks: subTasks));
-                } else {
-                  throw Exception('Please fill all fields correctly');
-                }
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.toString()))
-                );
-              }
-            },
-            child: Text('Save'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.mainColor,
-              padding: EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  bool _validateTask() {
-    return taskName.isNotEmpty && subTasks.isNotEmpty && subTasks.every((st) => st.name.isNotEmpty && st.timer > 0);
-  }
-}
-
-class SettingsDialog extends StatefulWidget {
-  final int initialBreakTime;
-  final Function(int) onSave;
-
-  const SettingsDialog({Key? key, required this.initialBreakTime, required this.onSave}) : super(key: key);
-
-  @override
-  _SettingsDialogState createState() => _SettingsDialogState();
-}
-
-class _SettingsDialogState extends State<SettingsDialog> {
-  late int breakTime;
-
-  @override
-  void initState() {
-    super.initState();
-    breakTime = widget.initialBreakTime;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Settings'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            decoration: const InputDecoration(labelText: 'Break time (minutes)'),
-            keyboardType: TextInputType.number,
-            onChanged: (value) => breakTime = int.tryParse(value) ?? 5,
-            controller: TextEditingController(text: breakTime.toString()),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          child: const Text('Cancel'),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        TextButton(
-          child: const Text('Save'),
-          onPressed: () {
-            try {
-              if (breakTime <= 0) throw Exception('Break time must be greater than 0');
-              widget.onSave(breakTime);
-            } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(e.toString()))
-              );
-            }
-          },
-        ),
-      ],
-    );
-  }
-}
-

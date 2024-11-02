@@ -73,10 +73,16 @@ class _TimeConverterHomeState extends State<TimeConverterHome> {
   Future<void> _loadSavedTimezones() async {
     final prefs = await SharedPreferences.getInstance();
     final savedTimezones = prefs.getStringList('saved_timezones');
+    final savedDisplayedTimezones = prefs.getStringList('displayed_timezones');
+
     if (savedTimezones != null) {
       setState(() {
         selectedTimezones = savedTimezones;
-        displayedTimezones = savedTimezones.take(4).toList();
+        if (savedDisplayedTimezones != null) {
+          displayedTimezones = savedDisplayedTimezones;
+        } else {
+          displayedTimezones = savedTimezones.take(4).toList();
+        }
         _initializeTimesByZone();
       });
     } else {
@@ -104,6 +110,7 @@ class _TimeConverterHomeState extends State<TimeConverterHome> {
   Future<void> _saveTimezones() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('saved_timezones', selectedTimezones);
+    await prefs.setStringList('displayed_timezones', displayedTimezones);
   }
 
   // Updates all timezone times when one is changed
@@ -315,15 +322,18 @@ class _TimeConverterHomeState extends State<TimeConverterHome> {
     );
 
     // Add the selected timezone if it's not already in the list
-    if (selected != null && !selectedTimezones.contains(selected)) {
+    if (selected != null) {
       setState(() {
-        selectedTimezones.add(selected);
-        if (displayedTimezones.length < 4) {
-          displayedTimezones.add(selected);
+        if (!selectedTimezones.contains(selected)) {
+          selectedTimezones.add(selected);
         }
-        final location = tz.getLocation(selected);
-        timesByZone[selected] = tz.TZDateTime.now(location);
-        _saveTimezones();
+        if (!displayedTimezones.contains(selected) &&
+            displayedTimezones.length < 4) {
+          displayedTimezones.add(selected);
+          final location = tz.getLocation(selected);
+          timesByZone[selected] = tz.TZDateTime.now(location);
+          _saveTimezones();
+        }
       });
     }
   }
@@ -343,6 +353,8 @@ class _TimeConverterHomeState extends State<TimeConverterHome> {
       onDismissed: (direction) {
         setState(() {
           displayedTimezones.remove(timezone);
+          selectedTimezones.remove(timezone);
+          timesByZone.remove(timezone);
           _saveTimezones();
         });
       },

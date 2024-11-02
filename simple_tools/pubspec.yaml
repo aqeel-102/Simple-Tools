@@ -48,6 +48,11 @@ dependencies:
   community_charts_flutter: ^1.0.2
   fl_chart: ^0.69.0
   flutter_background_service: ^5.0.10
+  app_settings: ^5.1.1
+  usage_stats: ^1.2.0
+  device_apps:
+  flutter_local_notifications: ^17.2.4
+  mobile_scanner: ^5.2.3
 
 
 

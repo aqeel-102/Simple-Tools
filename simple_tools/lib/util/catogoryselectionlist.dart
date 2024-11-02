@@ -4,13 +4,13 @@ import 'package:simple_tools/views/screens/White%20Noise%20Generator/mainscreenn
 import 'package:simple_tools/views/screens/barcodescanner/barcodescanner.dart';
 import 'package:simple_tools/views/screens/bmi/bmi.dart';
 import 'package:simple_tools/views/screens/bmr/bmr.dart';
-import 'package:simple_tools/views/screens/deviceinfo/deviceinfohomepage';
 import 'package:simple_tools/views/screens/passwordmanager/landingforpasswordmanager';
 import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome';
 import 'package:simple_tools/views/screens/qrgenerator/qrcodegenerator.dart';
-import 'package:simple_tools/views/screens/studytimer/studytimerhomescreen';
 import 'package:simple_tools/views/screens/timeconverter/timeconverterhome.dart';
 import '../util/app_constants.dart';
+import '../views/screens/deviceinfo/deviceinfohomepage.dart';
+import '../views/screens/studytimer/studytimerhomescreen.dart';
 // Import other screen files as needed
 
 class Tool {

@@ -242,9 +242,11 @@ class _StartupState extends State<Startup> {
                   SizedBox(
                     width: 100,
                     child: TextFormField(
+                      maxLength: 3,
                       textAlign: TextAlign.center,
                       controller: AppConstants.bmrheightController,
                       decoration: const InputDecoration(
+                        counterText: "",
                         border: InputBorder.none,
                       ),
                       keyboardType: TextInputType.number,
@@ -360,9 +362,13 @@ class _StartupState extends State<Startup> {
             SizedBox(
               width: 80,
               child: TextFormField(
+                maxLength: 3,
                 textAlign: TextAlign.center,
                 controller: controller,
-                decoration: const InputDecoration(border: InputBorder.none),
+                decoration: const InputDecoration(
+                  counterText: "",
+                  border: InputBorder.none,
+                ),
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 style: const TextStyle(

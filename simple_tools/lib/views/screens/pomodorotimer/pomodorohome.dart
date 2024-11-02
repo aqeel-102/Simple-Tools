@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:simple_tools/util/app_constants.dart';
@@ -34,10 +35,14 @@ class _PomodoroHomeState extends State<PomodoroHome> {
   void _loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _workDuration = prefs.getInt('workDuration') ?? AppConstants.defaultWorkDuration;
-      _shortBreakDuration = prefs.getInt('shortBreakDuration') ?? AppConstants.defaultShortBreakDuration;
-      _longBreakDuration = prefs.getInt('longBreakDuration') ?? AppConstants.defaultLongBreakDuration;
-      _pomodorosUntilLongBreak = prefs.getInt('pomodorosUntilLongBreak') ?? AppConstants.defaultPomodorosUntilLongBreak;
+      _workDuration =
+          prefs.getInt('workDuration') ?? AppConstants.defaultWorkDuration;
+      _shortBreakDuration = prefs.getInt('shortBreakDuration') ??
+          AppConstants.defaultShortBreakDuration;
+      _longBreakDuration = prefs.getInt('longBreakDuration') ??
+          AppConstants.defaultLongBreakDuration;
+      _pomodorosUntilLongBreak = prefs.getInt('pomodorosUntilLongBreak') ??
+          AppConstants.defaultPomodorosUntilLongBreak;
       _remainingTime = _workDuration;
     });
   }
@@ -47,7 +52,9 @@ class _PomodoroHomeState extends State<PomodoroHome> {
     List<String>? tasksJson = prefs.getStringList('tasks');
     if (tasksJson != null) {
       setState(() {
-        _tasks = tasksJson.map((taskJson) => Task.fromJson(json.decode(taskJson))).toList();
+        _tasks = tasksJson
+            .map((taskJson) => Task.fromJson(json.decode(taskJson)))
+            .toList();
       });
     }
   }
@@ -62,7 +69,8 @@ class _PomodoroHomeState extends State<PomodoroHome> {
 
   void _saveTasks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> tasksJson = _tasks.map((task) => json.encode(task.toJson())).toList();
+    List<String> tasksJson =
+        _tasks.map((task) => json.encode(task.toJson())).toList();
     prefs.setStringList('tasks', tasksJson);
   }
 
@@ -93,7 +101,11 @@ class _PomodoroHomeState extends State<PomodoroHome> {
     _timer?.cancel();
     setState(() {
       _isRunning = false;
-      _remainingTime = _isWorking ? _workDuration : (_completedPomodoros % _pomodorosUntilLongBreak == 0 ? _longBreakDuration : _shortBreakDuration);
+      _remainingTime = _isWorking
+          ? _workDuration
+          : (_completedPomodoros % _pomodorosUntilLongBreak == 0
+              ? _longBreakDuration
+              : _shortBreakDuration);
     });
   }
 
@@ -102,7 +114,9 @@ class _PomodoroHomeState extends State<PomodoroHome> {
       if (_isWorking) {
         _completedPomodoros++;
         _isWorking = false;
-        _remainingTime = _completedPomodoros % _pomodorosUntilLongBreak == 0 ? _longBreakDuration : _shortBreakDuration;
+        _remainingTime = _completedPomodoros % _pomodorosUntilLongBreak == 0
+            ? _longBreakDuration
+            : _shortBreakDuration;
       } else {
         _isWorking = true;
         _remainingTime = _workDuration;
@@ -158,13 +172,21 @@ class _PomodoroHomeState extends State<PomodoroHome> {
                   child: Column(
                     children: [
                       Text(
-                        _isWorking ? AppConstants.workTimeText : AppConstants.breakTimeText,
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppConstants. textColor),
+                        _isWorking
+                            ? AppConstants.workTimeText
+                            : AppConstants.breakTimeText,
+                        style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppConstants.textColor),
                       ),
                       SizedBox(height: 20),
                       Text(
                         _formatTime(_remainingTime),
-                        style: TextStyle(fontSize: 72, fontWeight: FontWeight.bold, color: AppConstants. textColor),
+                        style: TextStyle(
+                            fontSize: 72,
+                            fontWeight: FontWeight.bold,
+                            color: AppConstants.textColor),
                       ),
                       SizedBox(height: 20),
                       Row(
@@ -172,25 +194,28 @@ class _PomodoroHomeState extends State<PomodoroHome> {
                         children: [
                           ElevatedButton(
                             onPressed: _isRunning ? _pauseTimer : _startTimer,
-                            child: Text(_isRunning ? AppConstants.pauseButtonText : AppConstants.startButtonText),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppConstants.textColor,
                             ),
+                            child: Text(_isRunning
+                                ? AppConstants.pauseButtonText
+                                : AppConstants.startButtonText),
                           ),
                           SizedBox(width: 20),
                           ElevatedButton(
                             onPressed: _resetTimer,
-                            child: Text(AppConstants.resetButtonText),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppConstants.textColor,
                             ),
+                            child: Text(AppConstants.resetButtonText),
                           ),
                         ],
                       ),
                       SizedBox(height: 20),
                       Text(
                         '${AppConstants.completedPomodorosText}: $_completedPomodoros',
-                        style: TextStyle(fontSize: 18, color: AppConstants. textColor),
+                        style: TextStyle(
+                            fontSize: 18, color: AppConstants.textColor),
                       ),
                     ],
                   ),
@@ -205,22 +230,41 @@ class _PomodoroHomeState extends State<PomodoroHome> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(AppConstants.settingsText, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppConstants. textColor)),
+                      Text(AppConstants.settingsText,
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppConstants.textColor)),
                       SizedBox(height: 10),
-                      _buildDurationSetting(AppConstants.workDurationText, _workDuration, (value) => setState(() => _workDuration = value)),
-                      _buildDurationSetting(AppConstants.shortBreakDurationText, _shortBreakDuration, (value) => setState(() => _shortBreakDuration = value)),
-                      _buildDurationSetting(AppConstants.longBreakDurationText, _longBreakDuration, (value) => setState(() => _longBreakDuration = value)),
-                      _buildNumberSetting(AppConstants.pomodorosUntilLongBreakText, _pomodorosUntilLongBreak, (value) => setState(() => _pomodorosUntilLongBreak = value)),
+                      _buildDurationSetting(
+                          AppConstants.workDurationText,
+                          _workDuration,
+                          (value) => setState(() => _workDuration = value)),
+                      _buildDurationSetting(
+                          AppConstants.shortBreakDurationText,
+                          _shortBreakDuration,
+                          (value) =>
+                              setState(() => _shortBreakDuration = value)),
+                      _buildDurationSetting(
+                          AppConstants.longBreakDurationText,
+                          _longBreakDuration,
+                          (value) =>
+                              setState(() => _longBreakDuration = value)),
+                      _buildNumberSetting(
+                          AppConstants.pomodorosUntilLongBreakText,
+                          _pomodorosUntilLongBreak,
+                          (value) =>
+                              setState(() => _pomodorosUntilLongBreak = value)),
                       SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: () {
                           _saveSettings();
                           _resetTimer();
                         },
-                        child: Text(AppConstants.saveSettingsButtonText),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppConstants.textColor,
                         ),
+                        child: Text(AppConstants.saveSettingsButtonText),
                       ),
                     ],
                   ),
@@ -235,31 +279,45 @@ class _PomodoroHomeState extends State<PomodoroHome> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(AppConstants.tasksText, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppConstants. textColor)),
+                      Text(AppConstants.tasksText,
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppConstants.textColor)),
                       SizedBox(height: 10),
                       Row(
                         children: [
                           Expanded(
                             child: TextField(
                               controller: _taskController,
+                              maxLength: 15,
                               decoration: InputDecoration(
                                 hintText: AppConstants.enterTaskHintText,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8.0),
-                                  borderSide: BorderSide(color: AppConstants.textColor.withOpacity(0.5)),
+                                  borderSide: BorderSide(
+                                      color: AppConstants.textColor
+                                          .withOpacity(0.5)),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8.0),
-                                  borderSide: BorderSide(color: AppConstants.textColor.withOpacity(0.3)),
+                                  borderSide: BorderSide(
+                                      color: AppConstants.textColor
+                                          .withOpacity(0.3)),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8.0),
-                                  borderSide: BorderSide(color: AppConstants.textColor),
+                                  borderSide:
+                                      BorderSide(color: AppConstants.textColor),
                                 ),
-                                fillColor: AppConstants.textColor.withOpacity(0.1),
+                                fillColor:
+                                    AppConstants.textColor.withOpacity(0.1),
                                 filled: true,
-                                hintStyle: TextStyle(color: AppConstants.textColor.withOpacity(0.5)),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                hintStyle: TextStyle(
+                                    color: AppConstants.textColor
+                                        .withOpacity(0.5)),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
                               ),
                               style: TextStyle(color: AppConstants.textColor),
                               cursorColor: AppConstants.textColor,
@@ -268,10 +326,10 @@ class _PomodoroHomeState extends State<PomodoroHome> {
                           SizedBox(width: 10),
                           ElevatedButton(
                             onPressed: _addTask,
-                            child: Text(AppConstants.addTaskButtonText),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppConstants.textColor,
                             ),
+                            child: Text(AppConstants.addTaskButtonText),
                           ),
                         ],
                       ),
@@ -281,7 +339,9 @@ class _PomodoroHomeState extends State<PomodoroHome> {
                         itemCount: _tasks.length,
                         itemBuilder: (context, index) {
                           return ListTile(
-                            title: Text(_tasks[index].name, style: TextStyle(color: AppConstants. textColor)),
+                            title: Text(_tasks[index].name,
+                                style:
+                                    TextStyle(color: AppConstants.textColor)),
                             leading: Checkbox(
                               value: _tasks[index].isCompleted,
                               onChanged: (bool? value) {
@@ -290,10 +350,12 @@ class _PomodoroHomeState extends State<PomodoroHome> {
                                 });
                                 _saveTasks();
                               },
-                              fillColor: MaterialStateProperty.all(AppConstants.activeColor),
+                              fillColor: WidgetStateProperty.all(
+                                  AppConstants.activeColor),
                             ),
                             trailing: IconButton(
-                              icon: Icon(Icons.delete, color: AppConstants. textColorBlack),
+                              icon: Icon(Icons.delete,
+                                  color: AppConstants.textColorBlack),
                               onPressed: () => _deleteTask(index),
                             ),
                           );
@@ -310,15 +372,17 @@ class _PomodoroHomeState extends State<PomodoroHome> {
     );
   }
 
-  Widget _buildDurationSetting(String label, int duration, Function(int) onChanged) {
+  Widget _buildDurationSetting(
+      String label, int duration, Function(int) onChanged) {
     return ListTile(
-      title: Text(label, style: TextStyle(color: AppConstants. textColor)),
+      title: Text(label, style: TextStyle(color: AppConstants.textColor)),
       trailing: DropdownButton<int>(
         value: duration ~/ 60,
         items: List.generate(60, (index) => index + 1)
             .map((int value) => DropdownMenuItem<int>(
                   value: value,
-                  child: Text('$value ${AppConstants.minuteText}', style: TextStyle(color: AppConstants. textColor)),
+                  child: Text('$value ${AppConstants.minuteText}',
+                      style: TextStyle(color: AppConstants.textColor)),
                 ))
             .toList(),
         onChanged: (int? value) {
@@ -333,13 +397,14 @@ class _PomodoroHomeState extends State<PomodoroHome> {
 
   Widget _buildNumberSetting(String label, int value, Function(int) onChanged) {
     return ListTile(
-      title: Text(label, style: TextStyle(color: AppConstants. textColor)),
+      title: Text(label, style: TextStyle(color: AppConstants.textColor)),
       trailing: DropdownButton<int>(
         value: value,
         items: List.generate(10, (index) => index + 1)
             .map((int value) => DropdownMenuItem<int>(
                   value: value,
-                  child: Text('$value', style: TextStyle(color: AppConstants. textColor)),
+                  child: Text('$value',
+                      style: TextStyle(color: AppConstants.textColor)),
                 ))
             .toList(),
         onChanged: (int? value) {
@@ -368,12 +433,12 @@ class Task {
   Task(this.name, {this.isCompleted = false});
 
   Map<String, dynamic> toJson() => {
-    'name': name,
-    'isCompleted': isCompleted,
-  };
+        'name': name,
+        'isCompleted': isCompleted,
+      };
 
   factory Task.fromJson(Map<String, dynamic> json) => Task(
-    json['name'],
-    isCompleted: json['isCompleted'],
-  );
+        json['name'],
+        isCompleted: json['isCompleted'],
+      );
 }

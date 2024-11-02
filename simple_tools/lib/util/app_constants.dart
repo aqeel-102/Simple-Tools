@@ -55,6 +55,7 @@ class AppConstants {
   static const String chessClock = ' Chess Clock';
   static const String barCodeGEnerator = 'Bar-Code Generator ';
   static const String qrCodeGenerator = 'Qr-Code Generator ';
+  static const String sleepTimeTracker = 'Sleep Time Tracker';
   static const double compassElevation = 4.0;
 
   static const mainColor = Color(0xFF448AFF);

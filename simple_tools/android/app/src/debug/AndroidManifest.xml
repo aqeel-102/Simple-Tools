@@ -23,9 +23,7 @@
     
      <!-- For usage stats access -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
-    
-    <!-- For getting installed apps info -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
     
 
 </manifest>

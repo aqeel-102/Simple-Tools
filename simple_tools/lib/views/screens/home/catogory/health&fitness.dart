@@ -6,7 +6,8 @@ import 'package:simple_tools/views/screens/bmi/bmi.dart';
 import 'package:simple_tools/views/screens/bmr/bmr.dart';
 import 'dart:convert';
 
-import 'package:simple_tools/views/screens/deviceinfo/deviceinfohomepage';
+import '../../deviceinfo/deviceinfohomepage.dart';
+
 
 class HealthAndFitnessPage extends StatefulWidget {
   const HealthAndFitnessPage({super.key});

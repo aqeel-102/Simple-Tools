@@ -3,9 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_tools/util/app_constants.dart';
 import 'package:simple_tools/util/catogoryselectionlist.dart';
 import 'package:simple_tools/views/screens/barcodescanner/barcodescanner.dart';
-import 'package:simple_tools/views/screens/deviceinfo/deviceinfohomepage';
 import 'package:simple_tools/views/screens/qrgenerator/qrcodegenerator.dart';
 import 'dart:convert';
+
+import '../../deviceinfo/deviceinfohomepage.dart';
 
 class UtilitiesPage extends StatefulWidget {
   const UtilitiesPage({super.key});

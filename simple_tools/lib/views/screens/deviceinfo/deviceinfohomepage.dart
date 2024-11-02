@@ -15,11 +15,12 @@ class DeviceInfoHomePage extends StatefulWidget {
   State<DeviceInfoHomePage> createState() => _DeviceInfoHomePageState();
 }
 
-class _DeviceInfoHomePageState extends State<DeviceInfoHomePage> with SingleTickerProviderStateMixin {
+class _DeviceInfoHomePageState extends State<DeviceInfoHomePage>
+    with SingleTickerProviderStateMixin {
   final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
   final Battery _battery = Battery();
   late final TabController _tabController;
-  
+
   // Data maps for different sections
   final Map<String, dynamic> _deviceData = {};
   final Map<String, dynamic> _systemData = {};
@@ -45,7 +46,8 @@ class _DeviceInfoHomePageState extends State<DeviceInfoHomePage> with SingleTick
 
   void _initializeControllers() {
     _tabController = TabController(length: 5, vsync: this);
-    _refreshTimer = Timer.periodic(_updateInterval, (_) => _updateSystemStats());
+    _refreshTimer =
+        Timer.periodic(_updateInterval, (_) => _updateSystemStats());
   }
 
   void _initializeDataStreams() async {
@@ -81,12 +83,13 @@ class _DeviceInfoHomePageState extends State<DeviceInfoHomePage> with SingleTick
   }
 
   void _initializeBattery() {
-    _batterySubscription = _battery.onBatteryStateChanged.listen((BatteryState state) async {
+    _batterySubscription =
+        _battery.onBatteryStateChanged.listen((BatteryState state) async {
       if (!mounted) return;
-      
+
       final level = await _battery.batteryLevel;
       final isInPowerSaveMode = await _battery.isInBatterySaveMode;
-      
+
       setState(() {
         _batteryData.addAll({
           'Battery Level': '$level%',
@@ -112,7 +115,7 @@ class _DeviceInfoHomePageState extends State<DeviceInfoHomePage> with SingleTick
 
   Future<void> _updateSystemStats() async {
     if (!mounted) return;
-    
+
     setState(() {
       _systemData.addAll({
         'CPU Cores': SysInfo.cores.length,
@@ -125,16 +128,12 @@ class _DeviceInfoHomePageState extends State<DeviceInfoHomePage> with SingleTick
   }
 
   String _formatBytes(int bytes) {
-    const suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    var i = 0;
-    double value = bytes.toDouble();
-    
-    while (value >= 1024 && i < suffixes.length - 1) {
-      value /= 1024;
-      i++;
+    if (bytes >= 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+    } else if (bytes >= 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
     }
-    
-    return '${value.toStringAsFixed(2)} ${suffixes[i]}';
+    return '${bytes.toStringAsFixed(2)} B';
   }
 
   String _calculateRamUsage() {
@@ -144,22 +143,30 @@ class _DeviceInfoHomePageState extends State<DeviceInfoHomePage> with SingleTick
     return '$usagePercentage%';
   }
 
+  String _formatBytesToGBorMB(int bytes) {
+    if (bytes >= 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+    } else {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
+    }
+  }
+
   Future<void> _getStorageInfo() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final stat = directory.statSync();
-      final total = await directory.parent.parent.parent.statSync();
-      
+      final total = directory.parent.parent.parent.statSync();
+
       final totalBytes = total.size;
       final usedBytes = stat.size;
       final freeBytes = totalBytes - usedBytes;
       final usagePercentage = (usedBytes / totalBytes * 100).toStringAsFixed(1);
-      
+
       setState(() {
         _storageData.addAll({
-          'Total Storage': _formatBytes(totalBytes),
-          'Used Storage': _formatBytes(usedBytes),
-          'Free Storage': _formatBytes(freeBytes),
+          'Total Storage': _formatBytesToGBorMB(totalBytes),
+          'Used Storage': _formatBytesToGBorMB(usedBytes),
+          'Free Storage': _formatBytesToGBorMB(freeBytes),
           'Storage Usage': '$usagePercentage%',
         });
       });
@@ -196,7 +203,6 @@ class _DeviceInfoHomePageState extends State<DeviceInfoHomePage> with SingleTick
       'Hardware': info.hardware,
       'Brand': info.brand,
       'Device Type': info.isPhysicalDevice ? 'Physical Device' : 'Emulator',
-      'System Features': '${info.systemFeatures.length} Available',
     };
   }
 
@@ -264,7 +270,9 @@ class _DeviceInfoHomePageState extends State<DeviceInfoHomePage> with SingleTick
                 ? SizedBox(
                     width: _progressBarWidth,
                     child: LinearProgressIndicator(
-                      value: double.parse(entry.value.toString().replaceAll('%', '')) / 100,
+                      value: double.parse(
+                              entry.value.toString().replaceAll('%', '')) /
+                          100,
                       backgroundColor: Colors.grey[200],
                       valueColor: AlwaysStoppedAnimation<Color>(
                         Theme.of(context).primaryColor,

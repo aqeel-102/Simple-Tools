@@ -11,7 +11,7 @@ class SleepStatisticsScreen extends StatelessWidget {
   final Map<String, List<Map<String, dynamic>>> sleepPhases;
 
   const SleepStatisticsScreen({
-    Key? key,
+    super.key,
     required this.sleepData,
     required this.selectedDate,
     required this.getSleepQuality,
@@ -20,7 +20,7 @@ class SleepStatisticsScreen extends StatelessWidget {
     required this.previousDay,
     required this.nextDay,
     required this.sleepPhases,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +158,7 @@ class SleepStatisticsScreen extends StatelessWidget {
                                 'Duration: ${phase['duration'].toStringAsFixed(1)} hours',
                               ),
                             );
-                          }).toList(),
+                          }),
                         ],
                       ),
                     ),
