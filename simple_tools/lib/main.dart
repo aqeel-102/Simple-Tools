@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:simple_tools/util/app_constants.dart';
 import 'package:simple_tools/views/screens/home/landingpage.dart';
 
+// Import other screens here...
+
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {

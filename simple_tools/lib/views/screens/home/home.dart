@@ -5,7 +5,7 @@ import 'package:simple_tools/views/screens/chessclock/chesshome.dart';
 import 'package:simple_tools/views/screens/home/landingpage.dart';
 import 'package:simple_tools/views/screens/passwordmanager/landingforpasswordmanager';
 import 'package:simple_tools/views/screens/phoneusageapp/usagehomescreen.dart';
-import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome';
+import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome.dart';
 import 'package:simple_tools/views/screens/simpackage/prepaid_recharge_calculator.dart';
 import 'package:simple_tools/views/screens/sleeptimerecord/sleeptimehomepage.dart';
 import 'package:simple_tools/views/screens/timeconverter/timeconverterhome.dart';

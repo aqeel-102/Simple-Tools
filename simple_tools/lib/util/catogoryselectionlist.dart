@@ -5,7 +5,7 @@ import 'package:simple_tools/views/screens/barcodescanner/barcodescanner.dart';
 import 'package:simple_tools/views/screens/bmi/bmi.dart';
 import 'package:simple_tools/views/screens/bmr/bmr.dart';
 import 'package:simple_tools/views/screens/passwordmanager/landingforpasswordmanager';
-import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome';
+import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome.dart';
 import 'package:simple_tools/views/screens/qrgenerator/qrcodegenerator.dart';
 import 'package:simple_tools/views/screens/timeconverter/timeconverterhome.dart';
 import '../util/app_constants.dart';

@@ -20,7 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_tools/views/screens/kiblafinder/kabbacompassmain.dart';
 import 'package:simple_tools/views/screens/passwordmanager/landingforpasswordmanager';
 import 'package:simple_tools/views/screens/phoneusageapp/usagehomescreen.dart';
-import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome';
+import 'package:simple_tools/views/screens/pomodorotimer/pomodorohome.dart';
 import 'package:simple_tools/views/screens/qrgenerator/qrcodegenerator.dart';
 import 'package:simple_tools/views/screens/simpackage/prepaid_recharge_calculator.dart';
 import 'package:simple_tools/views/screens/sleeptimerecord/sleeptimehomepage.dart';

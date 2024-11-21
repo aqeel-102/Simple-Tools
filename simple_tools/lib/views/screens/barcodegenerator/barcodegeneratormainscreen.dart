@@ -21,7 +21,6 @@ class _BarcodeGeneratorMainScreenState
   BarcodeType _selectedBarcodeType = BarcodeType.Code128;
   double _barcodeWidth = 200;
   double _barcodeHeight = 80;
-  Color _barcodeColor = Colors.black;
   List<Map<String, dynamic>> _history = [];
 
   final TextEditingController _dataController = TextEditingController();
@@ -161,18 +160,13 @@ class _BarcodeGeneratorMainScreenState
               ],
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _pickColor,
-              child: const Text('Pick Barcode Color'),
-            ),
-            const SizedBox(height: 16),
             if (_barcodeData.isNotEmpty)
               BarcodeWidget(
                 barcode: Barcode.fromType(_selectedBarcodeType),
                 data: _barcodeData,
                 width: _barcodeWidth,
                 height: _barcodeHeight,
-                color: _barcodeColor,
+                color: Colors.black,
               ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -186,41 +180,6 @@ class _BarcodeGeneratorMainScreenState
         ),
       ),
     );
-  }
-
-  void _pickColor() async {
-    final Color? color = await showDialog<Color>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Pick a color'),
-          content: SingleChildScrollView(
-            child: ColorPicker(
-              pickerColor: _barcodeColor,
-              onColorChanged: (Color color) {
-                setState(() {
-                  _barcodeColor = color;
-                });
-              },
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop(_barcodeColor);
-              },
-            ),
-          ],
-        );
-      },
-    );
-
-    if (color != null) {
-      setState(() {
-        _barcodeColor = color;
-      });
-    }
   }
 
   Future<void> _saveBarcodeAsImage() async {
@@ -247,7 +206,7 @@ class _BarcodeGeneratorMainScreenState
         data: _barcodeData,
         width: _barcodeWidth,
         height: _barcodeHeight,
-        color: _barcodeColor,
+        color: Colors.black,
       );
       barcodeWidget.build(context);
       final picture = recorder.endRecording();
@@ -276,47 +235,5 @@ class _BarcodeGeneratorMainScreenState
         SnackBar(content: Text('Failed to save barcode: $e')),
       );
     }
-  }
-}
-
-class ColorPicker extends StatelessWidget {
-  final Color pickerColor;
-  final ValueChanged<Color> onColorChanged;
-
-  const ColorPicker({
-    super.key,
-    required this.pickerColor,
-    required this.onColorChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 300,
-      height: 300,
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          crossAxisSpacing: 5,
-          mainAxisSpacing: 5,
-        ),
-        itemCount: Colors.primaries.length,
-        itemBuilder: (context, index) {
-          final color = Colors.primaries[index];
-          return GestureDetector(
-            onTap: () => onColorChanged(color),
-            child: Container(
-              decoration: BoxDecoration(
-                color: color,
-                border: Border.all(
-                  color: pickerColor == color ? Colors.white : Colors.grey,
-                  width: 2,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
   }
 }

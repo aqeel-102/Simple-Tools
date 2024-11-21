@@ -7,6 +7,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:simple_tools/util/app_constants.dart';
 
 class PomodoroHome extends StatefulWidget {
+  const PomodoroHome({super.key});
+
   @override
   _PomodoroHomeState createState() => _PomodoroHomeState();
 }
@@ -21,9 +23,9 @@ class _PomodoroHomeState extends State<PomodoroHome> {
   bool _isWorking = true;
   bool _isRunning = false;
   Timer? _timer;
-  AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _audioPlayer = AudioPlayer();
   List<Task> _tasks = [];
-  TextEditingController _taskController = TextEditingController();
+  final TextEditingController _taskController = TextEditingController();
 
   @override
   void initState() {

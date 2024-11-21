@@ -27,7 +27,9 @@ class _BarcodeHistoryState extends State<BarcodeHistory> {
       final recorder = PictureRecorder();
       final canvas = Canvas(recorder);
       final barcodeWidget = BarcodeWidget(
-        barcode: Barcode.fromType(barcode['type']),
+        barcode: Barcode.fromType(BarcodeType.values.firstWhere(
+            (type) => type.toString().split('.').last == barcode['type'],
+            orElse: () => BarcodeType.Code128)),
         data: barcode['data'],
         width: 200,
         height: 80,
@@ -80,7 +82,11 @@ class _BarcodeHistoryState extends State<BarcodeHistory> {
                   child: Column(
                     children: [
                       BarcodeWidget(
-                        barcode: Barcode.fromType(barcode['type']),
+                        barcode: Barcode.fromType(BarcodeType.values.firstWhere(
+                            (type) =>
+                                type.toString().split('.').last ==
+                                barcode['type'],
+                            orElse: () => BarcodeType.Code128)),
                         data: barcode['data'],
                         width: 200,
                         height: 80,
